@@ -230,7 +230,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez vaincu tous les monstres!", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(Die Gegner sind besiegt!|Du hast alle Gegner besiegt)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"すべての敵を倒した！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(打倒了所有敌人！|讨伐了所有的魔物！|魔物都离开了！)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(打倒了所有敌人！)", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 6998, 9365
@@ -239,7 +239,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la deuxième salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur zweiten Kammer (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「第二区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"通往第二区的大门", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往第二区的大门", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> ThirdChamberRegex = new() {
@@ -247,7 +247,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la troisième salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur dritten Kammer (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「第三区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"通往第三区的大门", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往第三区的大门", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> FourthChamberRegex = new() {
@@ -255,7 +255,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la quatrième salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur vierten Kammer (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「第四区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"通往第四区的大门", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往第四区的大门", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> FifthChamberRegex = new() {
@@ -263,7 +263,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la cinquième salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur fünften Kammer (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「第五区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"通往第五区的大门", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往第五区的大门", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> SixthChamberRegex = new() {
@@ -271,7 +271,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la sixième salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur sechsten Kammer (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「第六区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"通往第六区的大门", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往第六区的大门", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> FinalChamberRegex = new() {
@@ -279,7 +279,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"Vous avez ouvert la porte menant (vers|à) la dernière salle", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"Das Tor zur (letzten Kammer|Verdammnis) (öffnet sich|steht offen!)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"「最終区画」への扉が開いた！", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(通往最终区的大门|通往终极区的大门)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打开了通往最终区的大门", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 9352
@@ -297,7 +297,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(Les ennemis se sont enfuis|L'avatar de l'observateur est parti)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(Ihr konntet nicht alle Wächter bezwingen|Ihr konntet nicht alle Beobachter bezwingen)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"(魔物は立ち去ったようだ|観察者の幻体は去ったようだ)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(异常的存在|畸形的存在)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(所有魔物|观察者的幻体)", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 9360, 9366, 11270
@@ -306,7 +306,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(Vous avez terrassé tous les ennemis|Vous avez vaincu tous les monstres)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(Alle Wächter sind besiegt|Alle Beobachter sind besiegt|Alle Feinde wurden besiegt)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"(すべての魔物を倒した|すべての敵を倒した)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"被(打倒|讨伐)了", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"打倒了所有敌人！", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11262
@@ -315,7 +315,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Ramassez \d* sacs brillants en \d* secondes", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Sammle \d* schimmernde Säcke in \d* Sekunden!", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^\d*秒以内に「輝く袋」を\d*個拾え", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(开始转动|开始旋转)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"90秒之内捡拾100个“发光的袋子”！", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11265, 11274
@@ -324,7 +324,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(La fantasmagorie a pris fin|Vous avez ramassé \d* sac(s)? brilliant(s)? et un coffre en)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(Der Fiebertraum ist ausgeträumt|Du hast \d* schimmernde(n)? (Sack|Säcke) erhalten und eine)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"(「スペシャルドリーム」が終了した|「輝く袋」を\d*個取得し)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(停止了|结束了)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(“奇梦抚心”结束了|获得了 \d* 个“发光的袋子”，出现了)", RegexOptions.IgnoreCase) }
         };
 
         ////LogMessage: 11269
@@ -341,7 +341,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Rêverie mineure", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Leise Ahnung", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^スモールドリーム", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^小小的幻想", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^小梦怡情", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11269
@@ -350,7 +350,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Mirage majeur", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Fixe Idee", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^ミドルドリーム", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^中等的幻想", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^中梦悦性", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11269
@@ -359,7 +359,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Songe merveilleux", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Großer Gedanke", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^ビッグドリーム", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^巨大的幻想", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^大梦安神", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11269
@@ -368,7 +368,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Fantaisie finale", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Finale Fantasie", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^ファイナルドリーム", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^终极幻想", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^终梦修身", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 6997
@@ -377,7 +377,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(actionné la porte\.)$", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(das Tor zu öffnen\.)$", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"(は、扉に手を掛けた。)$", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"把手放到了门上。$", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"把手放到了门上！$", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 9350
