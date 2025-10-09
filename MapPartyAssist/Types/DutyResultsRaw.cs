@@ -1,4 +1,4 @@
-﻿using Dalamud.Game;
+using Dalamud.Game;
 using LiteDB;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace MapPartyAssist.Types {
         [BsonRef("map")]
         public MPAMap? Map { get; set; }
         public string? Owner { get; set; }
-        public string[] Players { get; set; }
+        public string[] Players { get; set; } = Array.Empty<string>();
 
         public DutyResultsRaw() {
             Id = new();

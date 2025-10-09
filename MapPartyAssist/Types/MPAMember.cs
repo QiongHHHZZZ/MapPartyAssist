@@ -1,4 +1,4 @@
-﻿using LiteDB;
+using LiteDB;
 using MapPartyAssist.Types.Attributes;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace MapPartyAssist.Types {
         public MPAMapLink? MapLink { get; set; }
         public MPAMapLink? PreviousMapLink { get; set; }
         [BsonId]
-        public string Key => $"{Name} {HomeWorld}";
+        public string Key => string.IsNullOrEmpty(HomeWorld) ? Name : $"{Name} {HomeWorld}";
 
         [BsonIgnore]
         public string FirstName => Name.Split(" ")[0];
@@ -29,9 +29,20 @@ namespace MapPartyAssist.Types {
         }
 
         public MPAMember(string key, bool isSelf = false) {
-            var split = key.Split(" ");
-            Name = $"{split[0]} {split[1]}";
-            HomeWorld = split[2];
+            if(string.IsNullOrWhiteSpace(key)) {
+                throw new ArgumentException("Player key cannot be null or whitespace.", nameof(key));
+            }
+            var parts = key.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+            if(parts.Length >= 3) {
+                Name = $"{parts[0]} {parts[1]}";
+                HomeWorld = string.Join(" ", parts[2..]);
+            } else if(parts.Length == 2) {
+                Name = parts[0];
+                HomeWorld = parts[1];
+            } else {
+                Name = parts[0];
+                HomeWorld = string.Empty;
+            }
             IsSelf = isSelf;
             LastJoined = DateTime.Now;
             Maps = new();

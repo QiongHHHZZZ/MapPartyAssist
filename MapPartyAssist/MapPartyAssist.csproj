@@ -2,19 +2,36 @@
 <Project Sdk="Dalamud.NET.Sdk/13.0.0">
   <PropertyGroup>
     <Authors>SaMo</Authors>
-    <Company></Company>
+    <Company>
+    </Company>
     <Version>2.5.0.2</Version>
     <Description>Map Party Features.</Description>
-    <Copyright></Copyright>
-    <PackageProjectUrl></PackageProjectUrl>
+    <Copyright>
+    </Copyright>
+    <PackageProjectUrl>
+    </PackageProjectUrl>
   </PropertyGroup>
-
   <PropertyGroup>
-	<PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="5.0.16" />
   </ItemGroup>
-
+  <PropertyGroup>
+    <DalamudCnHooksRoot Condition="'$(DalamudCnHooksRoot)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">$(APPDATA)\XIVLauncherCN\addon\Hooks\</DalamudCnHooksRoot>
+    <DalamudHooksRoot Condition="'$(DalamudHooksRoot)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">$(APPDATA)\XIVLauncher\addon\Hooks\</DalamudHooksRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <DalamudCandidate Include="$(DalamudCnHooksRoot)**\Dalamud.dll" Condition="Exists('$(DalamudCnHooksRoot)')" />
+    <DalamudCandidate Include="$(DalamudHooksRoot)**\Dalamud.dll" Condition="Exists('$(DalamudHooksRoot)')" />
+    <DalamudCandidate Remove="C:\Users\15868\AppData\Roaming\XIVLauncherCN\addon\Hooks\25-09-24-01\**" />
+    <DalamudCandidate Remove="C:\Users\15868\AppData\Roaming\XIVLauncherCN\addon\Hooks\dev\**" />
+  </ItemGroup>
+  <PropertyGroup Condition="!Exists('$(DalamudLibPath)Dalamud.dll')">
+    <DalamudCandidatePaths>@(DalamudCandidate->'%(RootDir)%(Directory)')</DalamudCandidatePaths>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(DalamudLibPath)Dalamud.dll') and '$(DalamudCandidatePaths)' != ''">
+    <DalamudLibPath>$(DalamudCandidatePaths)</DalamudLibPath>
+    <AssemblySearchPaths>$(AssemblySearchPaths);$(DalamudCandidatePaths)</AssemblySearchPaths>
+  </PropertyGroup>
 </Project>

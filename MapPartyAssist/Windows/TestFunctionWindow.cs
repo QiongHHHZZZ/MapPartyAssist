@@ -1,4 +1,4 @@
-﻿#pragma warning disable
+#pragma warning disable
 #if DEBUG
 using Dalamud.Game;
 using Dalamud.Game.Text.SeStringHandling;
@@ -14,6 +14,7 @@ using Dalamud.Bindings.ImGui;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Types;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types.REST.Universalis;
 using Newtonsoft.Json;
 using System;
@@ -31,7 +32,7 @@ namespace MapPartyAssist.Windows {
     internal class TestFunctionWindow : Window {
 
         private Plugin _plugin;
-        private readonly string[] _languageCombo = { "Japanese", "English", "German", "French" };
+        private readonly string[] _languageCombo = { Loc.Tr("Japanese"), Loc.Tr("English"), Loc.Tr("German"), Loc.Tr("French") };
         private int _originLanguage = (int)ClientLanguage.English;
         private int _destinationLanguage = (int)ClientLanguage.English;
 
@@ -50,7 +51,7 @@ namespace MapPartyAssist.Windows {
 
         private string _itemIds = "30266,25187,19981";
 
-        public TestFunctionWindow(Plugin plugin) : base("MPA Test Functions") {
+        public TestFunctionWindow(Plugin plugin) : base(Loc.Tr("MPA Test Functions")) {
             this.SizeConstraints = new WindowSizeConstraints {
                 MinimumSize = new Vector2(150, 50),
                 MaximumSize = new Vector2(1000, 500)
@@ -64,7 +65,7 @@ namespace MapPartyAssist.Windows {
             //                     select t;
 
 
-            //todo: fix this
+            // Pending: populate data table selection correctly
             //_dataTableCombo = Assembly.GetAssembly(typeof(BNpcName)).GetTypes().Where(t => t.IsAssignableTo(typeof(IExcelRow))).ToArray();
             //_dataTableDisplayCombo = new string[_dataTableCombo.Length];
             //for(int i = 0; i < _dataTableCombo.Length; i++) {
@@ -79,14 +80,14 @@ namespace MapPartyAssist.Windows {
         public override void Draw() {
 
             if(ImGui.BeginTabBar("TabBar", ImGuiTabBarFlags.None)) {
-                if(ImGui.BeginTabItem("Misc.")) {
-                    if(ImGui.Button("Show all Duties")) {
+                if(ImGui.BeginTabItem(Loc.Tr("Misc."))) {
+                    if(ImGui.Button(Loc.Tr("Show all Duties"))) {
                         foreach(var duty in _plugin.DataManager.GetExcelSheet<ContentFinderCondition>()) {
                             _plugin.Log.Debug($"id: {duty.RowId} name: {duty.Name}");
                         }
                     }
 
-                    if(ImGui.Button("Show all Zones")) {
+                    if(ImGui.Button(Loc.Tr("Show all Zones"))) {
                         foreach(var zone in _plugin.DataManager.GetExcelSheet<TerritoryType>()) {
                             _plugin.Log.Debug($"id: {zone.RowId} name: {zone.PlaceName.Value.Name}");
                         }
@@ -100,35 +101,35 @@ namespace MapPartyAssist.Windows {
                     //    }
                     //}
 
-                    if(ImGui.Button("Maps Table")) {
+                    if(ImGui.Button(Loc.Tr("Maps Table"))) {
                         ShowMapsTable();
                     }
 
-                    if(ImGui.Button("Player Table")) {
+                    if(ImGui.Button(Loc.Tr("Player Table"))) {
                         ShowPlayerTable();
                     }
 
-                    if(ImGui.Button("DR Table")) {
+                    if(ImGui.Button(Loc.Tr("DR Table"))) {
                         ShowDRTable();
                     }
 
-                    if(ImGui.Button("Import Table")) {
+                    if(ImGui.Button(Loc.Tr("Import Table"))) {
                         ShowImportTable();
                     }
 
-                    if(ImGui.Button("Drop Price Table")) {
+                    if(ImGui.Button(Loc.Tr("Drop Price Table"))) {
                         var prices = _plugin.StorageManager.GetPrices().DeleteAll();
                         _plugin.Log.Debug($"Dropped {prices} records");
                     }
 
-                    if(ImGui.Button("Price Table")) {
+                    if(ImGui.Button(Loc.Tr("Price Table"))) {
                         var prices = _plugin.StorageManager.GetPrices().Query().ToList();
                         foreach(var price in prices) {
                             _plugin.Log.Debug(String.Format("itemID: {0,-8} NQ: {1,-12} HQ: {4,-12} region: {3,-15} lastChecked: {2,-25}", price.ItemId, price.NQPrice, price.LastChecked, price.Region, price.HQPrice));
                         }
                     }
 
-                    if(ImGui.Button("Last 3 DutyResults")) {
+                    if(ImGui.Button(Loc.Tr("Last 3 DutyResults"))) {
                         var dutyResults = _plugin.StorageManager.GetDutyResults().Query().OrderByDescending(dr => dr.Time).Limit(3).ToList();
                         foreach(var results in dutyResults) {
                             PrintDutyResults(results);
@@ -144,16 +145,16 @@ namespace MapPartyAssist.Windows {
                     //    TestMapContains();
                     //}
 
-                    if(ImGui.Button("Check and Archive Maps")) {
+                    if(ImGui.Button(Loc.Tr("Check and Archive Maps"))) {
                         _plugin.MapManager.CheckAndArchiveMaps();
                     }
 
 
-                    if(ImGui.Button("Save+Refresh")) {
+                    if(ImGui.Button(Loc.Tr("Save+Refresh"))) {
                         _plugin.Refresh();
                     }
 
-                    if(ImGui.Button("GetCurrentPlayer()")) {
+                    if(ImGui.Button(Loc.Tr("GetCurrentPlayer()"))) {
                         _plugin.GameStateManager.GetCurrentPlayer();
                     }
 
@@ -167,7 +168,7 @@ namespace MapPartyAssist.Windows {
                     //    _plugin.StorageManager.GetDutyResultsImports().DeleteAll();
                     //}
 
-                    if(ImGui.Button("fix record")) {
+                    if(ImGui.Button(Loc.Tr("fix record"))) {
                         var dr = _plugin.StorageManager.GetDutyResults().Query().Where(dr => dr.DutyId == 993).ToList();
 
                         foreach(var duty in dr) {
@@ -210,19 +211,19 @@ namespace MapPartyAssist.Windows {
                         //Plugin.StorageManager.UpdateDutyResults(dr);
                     }
 
-                    if(ImGui.Button("Set Map Status")) {
+                    if(ImGui.Button(Loc.Tr("Set Map Status"))) {
                         _plugin.MapManager.Status = StatusLevel.CAUTION;
-                        _plugin.MapManager.StatusMessage = "Multiple map owner candidates found, verify last map ownership.";
+                        _plugin.MapManager.StatusMessage = Loc.Tr("Multiple map owner candidates found, verify last map ownership.");
                     }
 
-                    if(ImGui.Button("Get Player Current Position")) {
+                    if(ImGui.Button(Loc.Tr("Get Player Current Position"))) {
                         Vector2 coords = WorldPosToMapCoords(_plugin.ClientState.LocalPlayer.Position);
                         _plugin.Log.Debug($"X: {_plugin.ClientState.LocalPlayer.Position.X} Y: {_plugin.ClientState.LocalPlayer.Position.Y}");
                         _plugin.Log.Debug($"coordsX: {coords.X} coordsY: {coords.Y}");
                         //Plugin.ClientState.LocalPlayer.Position.
                     }
 
-                    if(ImGui.Button("Get Map Position")) {
+                    if(ImGui.Button(Loc.Tr("Get Map Position"))) {
                         var map = _plugin.GameStateManager.CurrentPartyList.ElementAt(0).Value.MapLink;
                         _plugin.Log.Debug($"XCoord: {map.GetMapLinkPayload().XCoord}");
                         _plugin.Log.Debug($"YCoord: {map.GetMapLinkPayload().YCoord}");
@@ -231,16 +232,16 @@ namespace MapPartyAssist.Windows {
                         //_plugin.Log.Debug($"X: {Plugin.ClientState.LocalPlayer.Position.X} Y: {Plugin.ClientState.LocalPlayer.Position.Y}");
                     }
 
-                    if(ImGui.Button("Distance to Map Link")) {
+                    if(ImGui.Button(Loc.Tr("Distance to Map Link"))) {
                         var distance = _plugin.MapManager.GetDistanceToMapLink(_plugin.GameStateManager.CurrentPartyList.ElementAt(0).Value.MapLink);
                         _plugin.Log.Debug($"Distance: {distance}");
                     }
 
-                    if(ImGui.Button("Check closest link player")) {
+                    if(ImGui.Button(Loc.Tr("Check closest link player"))) {
                         _plugin.Log.Debug($"{_plugin.MapManager.GetPlayerWithClosestMapLink(_plugin.GameStateManager.CurrentPartyList.Values.ToList()).Key} has the closest map link");
                     }
 
-                    if(ImGui.Button("Last Map loot")) {
+                    if(ImGui.Button(Loc.Tr("Last Map loot"))) {
                         var lastMap = _plugin.StorageManager.GetMaps().Query().Where(m => !m.IsDeleted).OrderBy(m => m.Time).ToList().Last();
                         if(lastMap != null && lastMap.LootResults != null) {
                             foreach(var lr in lastMap.LootResults) {
@@ -264,7 +265,7 @@ namespace MapPartyAssist.Windows {
                     //    }
                     //}
 
-                    if(ImGui.Button("VALIDATE ALL DUTYRESULTS")) {
+                    if(ImGui.Button(Loc.Tr("VALIDATE ALL DUTYRESULTS"))) {
 
                         var dr = _plugin.StorageManager.GetDutyResults().Query().ToList();
                         foreach(var x in dr) {
@@ -274,18 +275,18 @@ namespace MapPartyAssist.Windows {
                     }
 
 
-                    if(ImGui.Button("check map version")) {
+                    if(ImGui.Button(Loc.Tr("check map version"))) {
 
                         var map = _plugin.StorageManager.GetMaps().Query().Where(m => m.DutyName.Equals("the hidden canals of uznair", StringComparison.OrdinalIgnoreCase)).OrderByDescending(m => m.Time).FirstOrDefault();
                         _plugin.Log.Debug($"map id: {map.Id.ToString()}");
                         _plugin.StorageManager.UpdateMap(map);
                     }
 
-                    if(ImGui.Button("get circle regex")) {
+                    if(ImGui.Button(Loc.Tr("get circle regex"))) {
                         _plugin.Log.Debug($"{_plugin.DutyManager.CurrentDuty.CircleShiftsRegex[_plugin.ClientState.ClientLanguage].ToString()}");
                     }
 
-                    if(ImGui.Button("test slots final summon")) {
+                    if(ImGui.Button(Loc.Tr("test slots final summon"))) {
                         var dutyResults = new DutyResults {
                             DutyId = 1060,
                             DutyName = "Vault Oneiron",
@@ -307,7 +308,7 @@ namespace MapPartyAssist.Windows {
                         _plugin.StorageManager.AddDutyResults(dutyResults);
                     }
 
-                    if(ImGui.Button("Get Wipes")) {
+                    if(ImGui.Button(Loc.Tr("Get Wipes"))) {
                         var maps = _plugin.StorageManager.GetDutyResults().Query().Where(x => x.DutyId == 276).ToList().Where(x => x.CheckpointResults.Count % 2 == 0);
                         foreach(var map in maps) {
                             _plugin.Log.Debug(map.Time.ToString());
@@ -318,32 +319,32 @@ namespace MapPartyAssist.Windows {
                     ImGui.EndTabItem();
                 }
 
-                if(ImGui.BeginTabItem("Translate")) {
-                    if(ImGui.Combo($"Origin Language##OriginCombo", ref _originLanguage, _languageCombo, _languageCombo.Length)) {
+                if(ImGui.BeginTabItem(Loc.Tr("Translate"))) {
+                    if(ImGui.Combo($"{Loc.Tr("Origin Language")}##OriginCombo", ref _originLanguage, _languageCombo, _languageCombo.Length)) {
                     }
 
-                    if(ImGui.Combo($"Destination Language##DestinationCombo", ref _destinationLanguage, _languageCombo, _languageCombo.Length)) {
+                    if(ImGui.Combo($"{Loc.Tr("Destination Language")}##DestinationCombo", ref _destinationLanguage, _languageCombo, _languageCombo.Length)) {
                     }
 
                     ImGui.Separator();
 
-                    if(ImGui.Combo($"Data Type##DataTypeCombo", ref _selectedDataTypeIndex, _dataTableDisplayCombo, _dataTableDisplayCombo.Length)) {
+                    if(ImGui.Combo($"{Loc.Tr("Data Type")}##DataTypeCombo", ref _selectedDataTypeIndex, _dataTableDisplayCombo, _dataTableDisplayCombo.Length)) {
                         //_selectedDataType = _dataTableCombo[_selectedDataTypeIndex];
 
                         UpdatePropertyInfoCombo();
                     }
 
-                    if(ImGui.Combo($"Property##DataTypeCombo", ref _selectedPropertyIndex, _propertyInfoDisplayCombo, _propertyInfoDisplayCombo.Length)) {
+                    if(ImGui.Combo($"{Loc.Tr("Property")}##DataTypeCombo", ref _selectedPropertyIndex, _propertyInfoDisplayCombo, _propertyInfoDisplayCombo.Length)) {
                         //_selectedProperty = _propertyInfoCombo[_selectedPropertyIndex];
                     }
 
                     ImGui.Separator();
 
-                    if(ImGui.InputText("To Translate", ref _toTranslateText, 100)) {
+                    if(ImGui.InputText(Loc.Tr("To Translate"), ref _toTranslateText, 100)) {
 
                     }
 
-                    if(ImGui.Button("Translate")) {
+                    if(ImGui.Button(Loc.Tr("Translate"))) {
                         try {
                             //var method = typeof(Plugin).GetMethod("TranslateDataTableEntry");
                             //var genericMethod = method.MakeGenericMethod(_selectedDataType);
@@ -354,7 +355,7 @@ namespace MapPartyAssist.Windows {
                             _translateResult += " " + (string)typeof(Plugin).GetMethod("TranslateDataTableEntry").MakeGenericMethod(_selectedDataType)
                             .Invoke(_plugin, new object[] { _toTranslateText, _selectedProperty.Name, GrammarCase.Nominative, (ClientLanguage)_destinationLanguage, (ClientLanguage)_originLanguage });
                         } catch(Exception e) {
-                            _translateResult = "Translate error!";
+                            _translateResult = Loc.Tr("Translate error!");
                             while(e.InnerException != null && e.GetType() != typeof(ArgumentException)) {
                                 e = e.InnerException;
                             }
@@ -375,7 +376,7 @@ namespace MapPartyAssist.Windows {
                     }
                     ImGui.SameLine();
 
-                    ImGui.Text("Result: ");
+                    ImGui.Text(Loc.Tr("Result:"));
                     ImGui.SameLine();
                     ImGui.Text(_translateResult);
 
@@ -386,37 +387,37 @@ namespace MapPartyAssist.Windows {
                     ImGui.EndTabItem();
                 }
 
-                if(ImGui.BeginTabItem("Settings")) {
+                if(ImGui.BeginTabItem(Loc.Tr("Settings"))) {
                     bool printAllMessages = _plugin.PrintAllMessages;
-                    if(ImGui.Checkbox("Print all messages", ref printAllMessages)) {
+                    if(ImGui.Checkbox(Loc.Tr("Print all messages"), ref printAllMessages)) {
                         _plugin.PrintAllMessages = printAllMessages;
                         _plugin.Refresh();
                     }
                     bool printPayloads = _plugin.PrintPayloads;
-                    if(ImGui.Checkbox("Print payloads", ref printPayloads)) {
+                    if(ImGui.Checkbox(Loc.Tr("Print payloads"), ref printPayloads)) {
                         _plugin.PrintPayloads = printPayloads;
                         _plugin.Refresh();
                     }
                     bool editMode = _plugin.AllowEdit;
-                    if(ImGui.Checkbox("Edit Mode", ref editMode)) {
+                    if(ImGui.Checkbox(Loc.Tr("Edit Mode"), ref editMode)) {
                         _plugin.AllowEdit = editMode;
                         _plugin.Refresh();
                     }
-                    if(ImGui.Button("Enable Universalis Price Check")) {
+                    if(ImGui.Button(Loc.Tr("Enable Universalis Price Check"))) {
                         _plugin.PriceHistory.EnablePolling();
                     }
                     ImGui.SameLine();
-                    if(ImGui.Button("Disable Universalis Price Check")) {
+                    if(ImGui.Button(Loc.Tr("Disable Universalis Price Check"))) {
                         _plugin.PriceHistory.DisablePolling();
                     }
                     ImGui.EndTabItem();
                 }
 
-                if(ImGui.BeginTabItem("API")) {
-                    if(ImGui.InputText("ItemIDs", ref _itemIds, 100)) {
+                if(ImGui.BeginTabItem(Loc.Tr("API"))) {
+                    if(ImGui.InputText(Loc.Tr("ItemIDs"), ref _itemIds, 100)) {
 
                     }
-                    if(ImGui.Button("Get Price Data")) {
+                    if(ImGui.Button(Loc.Tr("Get Price Data"))) {
                         _plugin.DataQueue.QueueDataOperation(() => {
                             string[] stringIDs = _itemIds.Trim().Split(",");
                             List<uint> intIDs = new();
@@ -436,14 +437,14 @@ namespace MapPartyAssist.Windows {
                         });
                     }
 
-                    if(ImGui.Button("Test JSON: Sale Entry")) {
+                    if(ImGui.Button(Loc.Tr("Test JSON: Sale Entry"))) {
                         string sale = "{ \"hq\": true, \"pricePerUnit\": 800,\"quantity\": 2,\"buyerName\": \"Jackie Caravella\",\"onMannequin\": false,\"timestamp\": 1704498382,\"worldName\": \"Seraph\",\"worldID\": 405}";
                         SaleEntry s = JsonConvert.DeserializeObject<SaleEntry>(sale);
 
                         _plugin.Log.Debug($"price per unit: {s.PricePerUnit}");
                     }
 
-                    if(ImGui.Button("Test JSON: Item History")) {
+                    if(ImGui.Button(Loc.Tr("Test JSON: Item History"))) {
                         string history = "{\r\n      \"itemID\": 19981,\r\n      \"lastUploadTime\": 1704506463055,\r\n      \"entries\": [\r\n        {\r\n          \"hq\": true,\r\n          \"pricePerUnit\": 274,\r\n          \"quantity\": 1,\r\n          \"buyerName\": \"Johnnie Foreshin\",\r\n          \"onMannequin\": false,\r\n          \"timestamp\": 1704495551,\r\n          \"worldName\": \"Excalibur\",\r\n          \"worldID\": 93\r\n        },\r\n        {\r\n          \"hq\": false,\r\n          \"pricePerUnit\": 391,\r\n          \"quantity\": 1,\r\n          \"buyerName\": \"Rai Borel\",\r\n          \"onMannequin\": false,\r\n          \"timestamp\": 1704494227,\r\n          \"worldName\": \"Cactuar\",\r\n          \"worldID\": 79\r\n        },\r\n        {\r\n          \"hq\": true,\r\n          \"pricePerUnit\": 281,\r\n          \"quantity\": 27,\r\n          \"buyerName\": \"Bazelle Dromeda\",\r\n          \"onMannequin\": false,\r\n          \"timestamp\": 1704485002,\r\n          \"worldName\": \"Famfrit\",\r\n          \"worldID\": 35\r\n        }\r\n      ],\r\n      \"regionName\": \"North-America\",\r\n      \"stackSizeHistogram\": { \"1\": 11, \"2\": 3, \"3\": 2, \"4\": 1, \"27\": 1, \"40\": 1, \"53\": 1 },\r\n      \"stackSizeHistogramNQ\": { \"1\": 7, \"2\": 1, \"3\": 2, \"4\": 1, \"40\": 1, \"53\": 1 },\r\n      \"stackSizeHistogramHQ\": { \"1\": 4, \"2\": 2, \"27\": 1 },\r\n      \"regularSaleVelocity\": 21,\r\n      \"nqSaleVelocity\": 16,\r\n      \"hqSaleVelocity\": 5\r\n}";
                         ItemHistory s = JsonConvert.DeserializeObject<ItemHistory>(history);
 
@@ -453,7 +454,7 @@ namespace MapPartyAssist.Windows {
                     ImGui.EndTabItem();
                 }
 
-                using(var tab = ImRaii.TabItem("Map Window")) {
+                using(var tab = ImRaii.TabItem(Loc.Tr("Map Window"))) {
                     var p1Name = "Bozzie Baranta";
                     var p1World = "Tatooine";
                     var p2Name = "Dud Bolt";
@@ -461,27 +462,27 @@ namespace MapPartyAssist.Windows {
                     MPAMember p1 = new MPAMember(p1Name, p1World);
                     MPAMember p2 = new MPAMember(p2Name, p2World);
 
-                    if(ImGui.Button("Create party members in DB")) {
+                    if(ImGui.Button(Loc.Tr("Create party members in DB"))) {
                         _plugin.DataQueue.QueueDataOperation(() => {
                             _plugin.StorageManager.AddPlayer(p1);
                             _plugin.StorageManager.AddPlayer(p2);
                         });
                     }
 
-                    if(ImGui.Button("Add party members")) {
+                    if(ImGui.Button(Loc.Tr("Add party members"))) {
                         _plugin.GameStateManager.CurrentPartyList.Add($"{p1Name} {p1World}", p1);
                         _plugin.GameStateManager.CurrentPartyList.Add($"{p2Name} {p2World}", p2);
                     }
 
-                    if(ImGui.Button("Add unknown Map")) {
+                    if(ImGui.Button(Loc.Tr("Add unknown Map"))) {
                         _plugin.MapManager.AddMap(null);
                     }
 
-                    ImGui.Text("Test move me!");
+                    ImGui.Text(Loc.Tr("Test move me!"));
 
                     using var drag = ImRaii.DragDropSource(ImGuiDragDropFlags.SourceAllowNullId);
                     if(drag) {
-                        ImGui.Text("Moving!");
+                        ImGui.Text(Loc.Tr("Moving!"));
                     }
                 }
             }

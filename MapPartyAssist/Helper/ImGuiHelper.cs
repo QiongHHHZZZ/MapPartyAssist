@@ -1,8 +1,9 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface;
+using MapPartyAssist.Localization;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
@@ -129,7 +130,7 @@ namespace MapPartyAssist.Helper {
                     }
                 }
             }
-            WrappedTooltip("Support the dev");
+            WrappedTooltip(Loc.Tr("Support the dev"));
         }
     }
 }

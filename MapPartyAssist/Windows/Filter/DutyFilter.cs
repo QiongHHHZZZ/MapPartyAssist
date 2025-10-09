@@ -1,13 +1,14 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 using System.Collections.Generic;
 
 namespace MapPartyAssist.Windows.Filter {
     public class DutyFilter : DataFilter {
 
-        public override string Name => "Duty";
+        public override string Name => Loc.Tr("Duty");
 
         public Dictionary<int, bool> FilterState { get; set; } = new();
         internal bool AllSelected { get; private set; } = false;
@@ -34,7 +35,7 @@ namespace MapPartyAssist.Windows.Filter {
 
         internal override void Draw() {
             bool allSelected = AllSelected;
-            if(ImGui.Checkbox($"Select All##{GetHashCode()}", ref allSelected)) {
+            if(ImGui.Checkbox(Loc.Tr("Select All") + $"##{GetHashCode()}", ref allSelected)) {
                 _plugin!.DataQueue.QueueDataOperation(() => {
                     foreach(var duty in FilterState) {
                         FilterState[duty.Key] = allSelected;
@@ -65,3 +66,4 @@ namespace MapPartyAssist.Windows.Filter {
         }
     }
 }
+

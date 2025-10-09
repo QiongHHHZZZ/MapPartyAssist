@@ -1,4 +1,4 @@
-﻿using Dalamud.Plugin.Services;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
@@ -117,7 +117,7 @@ namespace MapPartyAssist.Helper {
                 if(tNode != null) {
                     string nodeText = tNode->NodeText.ToString();
                     if(!nodeText.IsNullOrEmpty() && (node->IsVisible() || !onlyVisible)) {
-                        Log.Debug(string.Format("Visible: {5,-6} ID: {0,-8} type: {1,-6} childCount: {2,-4} parentID: {3,-25} parentType: {4}", node->NodeId, type, childCount, parentNodeIDString, parentNodeTypeString, node->IsVisible));
+                        Log.Debug(string.Format("Visible: {5,-6} ID: {0,-8} type: {1,-6} childCount: {2,-4} parentID: {3,-25} parentType: {4}", node->NodeId, type, childCount, parentNodeIDString, parentNodeTypeString, node->IsVisible()));
                         Log.Debug($"Text: {tNode->NodeText}");
                     }
                 }

@@ -1,4 +1,4 @@
-﻿using Dalamud.Interface;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using LiteDB;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace MapPartyAssist.Windows {
         private int _currentPage = 0;
         private bool _collapseAll = false;
         private DutyRange _dutyRange = DutyRange.All;
-        private readonly string[] _rangeCombo = { "Current", "Last Day", "Last Week", "All-Time" };
+        private readonly string[] _rangeCombo;
         private int _dutyId = 0;
         private int _selectedDuty = 0;
         private readonly int[] _dutyIdCombo = { 0, 179, 268, 276, 586, 688, 745, 819, 909 };
@@ -42,7 +43,13 @@ namespace MapPartyAssist.Windows {
 
         private SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
 
-        internal DutyResultsWindow(Plugin plugin) : base("Edit Duty Results") {
+        internal DutyResultsWindow(Plugin plugin) : base(Loc.Tr("Edit Duty Results")) {
+            _rangeCombo = new[] {
+                Loc.Tr("Current"),
+                Loc.Tr("Last Day"),
+                Loc.Tr("Last Week"),
+                Loc.Tr("All-Time")
+            };
             SizeConstraints = new WindowSizeConstraints {
                 MinimumSize = new Vector2(400, 50),
                 MaximumSize = new Vector2(500, 800)
@@ -51,7 +58,7 @@ namespace MapPartyAssist.Windows {
 
             //setup duty name combo
             _dutyNameCombo = new string[_dutyIdCombo.Length];
-            _dutyNameCombo[0] = "All Duties";
+            _dutyNameCombo[0] = Loc.Tr("All Duties");
             for(int i = 1; i < _dutyIdCombo.Length; i++) {
                 _dutyNameCombo[i] = _plugin.DutyManager.Duties[_dutyIdCombo[i]].GetDisplayName();
             }
@@ -72,7 +79,7 @@ namespace MapPartyAssist.Windows {
                         .Where(dr => (_dutyRange != DutyRange.Current || (dr.Map != null && !dr.Map.IsArchived && !dr.Map.IsDeleted))
                         //&& (_dutyRange != DutyRange.PastDay || ((DateTime.Now - dr.Time).TotalHours < 24))
                         //&& (_dutyRange != DutyRange.PastWeek || ((DateTime.Now - dr.Time).TotalDays < 7))
-                        && dr.Owner.Contains(_ownerFilter, StringComparison.OrdinalIgnoreCase)
+                        && (dr.Owner != null && dr.Owner.Contains(_ownerFilter, StringComparison.OrdinalIgnoreCase))
                         && (_dutyId == 0 || dr.DutyId == _dutyId)).OrderByDescending(dr => dr.Time).ToList();
 
                     string[] partyMemberFilters = _partyMemberFilter.Split(",");
@@ -132,7 +139,7 @@ namespace MapPartyAssist.Windows {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 //ImGui.SetNextItemWidth(200f * ImGuiHelpers.GlobalScale);
-                if(ImGui.Combo($"Duty##DutyCombo", ref _selectedDuty, _dutyNameCombo, _dutyNameCombo.Length)) {
+                if(ImGui.Combo(Loc.Tr("Duty") + "##DutyCombo", ref _selectedDuty, _dutyNameCombo, _dutyNameCombo.Length)) {
                     _dutyId = _dutyIdCombo[_selectedDuty];
                     Refresh(0);
                 }
@@ -140,20 +147,20 @@ namespace MapPartyAssist.Windows {
                 int dutyRangeToInt = (int)_dutyRange;
                 //ImGui.SameLine();
                 //ImGui.SetNextItemWidth(200f * ImGuiHelpers.GlobalScale);
-                if(ImGui.Combo($"Range##includesCombo", ref dutyRangeToInt, _rangeCombo, _rangeCombo.Length)) {
+                if(ImGui.Combo(Loc.Tr("Range") + "##includesCombo", ref dutyRangeToInt, _rangeCombo, _rangeCombo.Length)) {
                     _dutyRange = (DutyRange)dutyRangeToInt;
                     Refresh(0);
                 }
                 ImGui.EndTable();
             }
 
-            if(ImGui.InputText($"Map Owner", ref _ownerFilter, 50)) {
+            if(ImGui.InputText(Loc.Tr("Map Owner"), ref _ownerFilter, 50)) {
                 Refresh(0);
             }
-            if(ImGui.InputText($"Party Members", ref _partyMemberFilter, 100)) {
+            if(ImGui.InputText(Loc.Tr("Party Members"), ref _partyMemberFilter, 100)) {
                 Refresh(0);
             }
-            ImGuiComponents.HelpMarker("Party members present during run. \nSeparate party members by commas.");
+            ImGuiComponents.HelpMarker(Loc.Tr("Party members present during run. \\nSeparate party members by commas."));
             try {
                 ImGui.PushFont(UiBuilder.IconFont);
                 ImGui.TextColored(ImGuiColors.DalamudRed, $"{FontAwesomeIcon.ExclamationTriangle.ToIconString()}");
@@ -161,7 +168,7 @@ namespace MapPartyAssist.Windows {
                 ImGui.PopFont();
             }
             ImGui.SameLine();
-            ImGui.TextColored(ImGuiColors.DalamudRed, $"EDIT AT YOUR OWN RISK");
+            ImGui.TextColored(ImGuiColors.DalamudRed, Loc.Tr("EDIT AT YOUR OWN RISK"));
             ImGui.SameLine();
             try {
                 ImGui.PushFont(UiBuilder.IconFont);
@@ -180,13 +187,13 @@ namespace MapPartyAssist.Windows {
 
             ImGui.EndChild();
 
-            if(ImGui.Button("Save")) {
+            if(ImGui.Button(Loc.Tr("Save"))) {
                 //should this go in manager?
                 _plugin.StorageManager.UpdateDutyResults(_dutyResults.Where(dr => dr.IsEdited));
             }
 
             ImGui.SameLine();
-            if(ImGui.Button("Copy CSV")) {
+            if(ImGui.Button(Loc.Tr("Copy CSV"))) {
                 string csv = "";
                 foreach(var dutyResult in _dutyResults.OrderBy(dr => dr.Time)) {
                     //no checks
@@ -200,25 +207,25 @@ namespace MapPartyAssist.Windows {
             }
             if(ImGui.IsItemHovered()) {
                 ImGui.BeginTooltip();
-                ImGui.Text($"Creates a sequential comma-separated list of the last checkpoint reached to the clipboard.");
+                ImGui.Text(Loc.Tr("Creates a sequential comma-separated list of the last checkpoint reached to the clipboard."));
                 ImGui.EndTooltip();
             }
 
             ImGui.SameLine();
-            if(ImGui.Button("Collapse All")) {
+            if(ImGui.Button(Loc.Tr("Collapse All"))) {
                 _collapseAll = true;
             }
 
             if(_currentPage > 0) {
                 ImGui.SameLine();
-                if(ImGui.Button("Previous 100")) {
+                if(ImGui.Button(Loc.Tr("Previous 100"))) {
                     Refresh(_currentPage - 1);
                 }
             }
 
             if(_dutyResults.Count >= 100) {
                 ImGui.SameLine();
-                if(ImGui.Button("Next 100")) {
+                if(ImGui.Button(Loc.Tr("Next 100"))) {
                     Refresh(_currentPage + 1);
                 }
             }
@@ -226,25 +233,25 @@ namespace MapPartyAssist.Windows {
 
         private void DrawDutyResults(DutyResults dutyResults) {
             List<string> lastCheckpoints = new() {
-                "None"
+                Loc.Tr("None")
             };
             string? owner = dutyResults.Owner ?? "";
             string? gil = dutyResults.TotalGil.ToString();
             bool isCompleted = dutyResults.IsComplete;
             foreach(var checkpoint in _plugin.DutyManager.Duties[dutyResults.DutyId].Checkpoints!) {
-                lastCheckpoints.Add(checkpoint.Name);
+                lastCheckpoints.Add(Loc.Tr(checkpoint.Name));
             }
 
-            if(ImGui.CollapsingHeader(String.Format("{0:-23}     {1:-40}", dutyResults.Time.ToString(), dutyResults.DutyName))) {
-                if(ImGui.Checkbox($"Completed##{dutyResults.Id}--Completed", ref isCompleted)) {
+            if(ImGui.CollapsingHeader(String.Format("{0:-23}     {1:-40}", dutyResults.Time.ToString(), Loc.Tr(dutyResults.DutyName ?? string.Empty)))) {
+                if(ImGui.Checkbox(Loc.Tr("Completed") + $"##{dutyResults.Id}--Completed", ref isCompleted)) {
                     dutyResults.IsEdited = true;
                     dutyResults.IsComplete = isCompleted;
                 }
-                if(ImGui.InputText($"Owner##{dutyResults.Id}--Owner", ref owner, 50, ImGuiInputTextFlags.AutoSelectAll)) {
+                if(ImGui.InputText(Loc.Tr("Owner") + $"##{dutyResults.Id}--Owner", ref owner, 50, ImGuiInputTextFlags.AutoSelectAll)) {
                     dutyResults.IsEdited = true;
                     dutyResults.Owner = owner;
                 }
-                if(ImGui.InputText($"Total Gil##{dutyResults.Id}--TotalGil", ref gil, 9, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.CharsDecimal)) {
+                if(ImGui.InputText(Loc.Tr("Total Gil") + $"##{dutyResults.Id}--TotalGil", ref gil, 9, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.CharsDecimal)) {
                     int gilInt;
                     if(int.TryParse(gil, out gilInt)) {
                         dutyResults.IsEdited = true;
@@ -252,7 +259,7 @@ namespace MapPartyAssist.Windows {
                     }
                 }
                 var currentLastCheckpointIndex = dutyResults.CheckpointResults.Count;
-                if(ImGui.Combo($"Last Checkpoint##{dutyResults.Id}--LastCheckpoint", ref currentLastCheckpointIndex, lastCheckpoints.ToArray(), lastCheckpoints.Count)) {
+                if(ImGui.Combo(Loc.Tr("Last Checkpoint") + $"##{dutyResults.Id}--LastCheckpoint", ref currentLastCheckpointIndex, lastCheckpoints.ToArray(), lastCheckpoints.Count)) {
                     if(currentLastCheckpointIndex > dutyResults.CheckpointResults.Count) {
                         dutyResults.IsEdited = true;
                         for(int i = dutyResults.CheckpointResults.Count; i <= currentLastCheckpointIndex - 1; i++) {
@@ -266,11 +273,11 @@ namespace MapPartyAssist.Windows {
                     }
                 }
                 if(_plugin.DutyManager.Duties[dutyResults.DutyId].Structure == DutyStructure.Roulette) {
-                    string[] summons = { "Lesser", "Greater", "Elder", "Abomination", "Circle Shift" };
+                    string[] summons = { Loc.Tr("Lesser"), Loc.Tr("Greater"), Loc.Tr("Elder"), Loc.Tr("Abomination"), Loc.Tr("Circle Shift") };
                     var summonCheckpoints = dutyResults.CheckpointResults.Where(cr => cr.Checkpoint.Name.StartsWith("Complete")).ToList();
                     for(int i = 0; i < summonCheckpoints.Count(); i++) {
                         int summonIndex = (int?)summonCheckpoints[i].SummonType ?? 3;
-                        if(ImGui.Combo($"{StringHelper.AddOrdinal(i + 1)} Summon##{summonCheckpoints[i].GetHashCode()}-Summon", ref summonIndex, summons, summons.Length)) {
+                        if(ImGui.Combo(Loc.TrFormat("{0} Summon", StringHelper.AddOrdinal(i + 1)) + $"##{summonCheckpoints[i].GetHashCode()}-Summon", ref summonIndex, summons, summons.Length)) {
                             dutyResults.IsEdited = true;
                             summonCheckpoints[i].SummonType = (Summon)summonIndex;
                         }

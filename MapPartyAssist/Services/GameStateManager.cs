@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
@@ -106,7 +106,12 @@ namespace MapPartyAssist.Services {
         //builds current party list from scratch
         private void BuildCurrentPartyList(IPartyMember[] partyMembers) {
             _plugin.Log.Debug("Rebuilding current party list.");
-            MPAMember currentPlayerKey = new MPAMember(GetCurrentPlayer());
+            var currentPlayerKeyString = GetCurrentPlayer();
+            if(string.IsNullOrWhiteSpace(currentPlayerKeyString)) {
+                _plugin.Log.Warning("Unable to determine current player; skipping party list rebuild.");
+                return;
+            }
+            MPAMember currentPlayerKey = new MPAMember(currentPlayerKeyString);
             CurrentPartyList = new();
             var allPlayers = _plugin.StorageManager.GetPlayers();
             var currentPlayer = allPlayers.Query().Where(p => p.Key == currentPlayerKey.Key).FirstOrDefault();

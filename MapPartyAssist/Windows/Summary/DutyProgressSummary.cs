@@ -3,6 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Settings;
 using MapPartyAssist.Types;
 using MapPartyAssist.Windows.Filter;
@@ -79,6 +80,9 @@ namespace MapPartyAssist.Windows.Summary {
                 string fightVerb = isRoulette ? "Defeat" : "Clear";
                 string stageNoun = isRoulette ? "summon" : "chamber";
                 string gateNoun = isRoulette ? "summon" : "gate";
+            var passiveSuccessVerbDisplay = Loc.Tr(passiveSuccessVerb);
+            var stageNounDisplay = Loc.Tr(stageNoun);
+            var gateNounDisplay = Loc.Tr(gateNoun);
                 string chamberPattern = @"(?<=(Open|Complete) )[\d|final]+(?=(st|nd|rd|th)? (chamber|summon|trial))";
 
                 dutyStat.OpenChambers = new int[numChambers - 1];
@@ -141,7 +145,7 @@ namespace MapPartyAssist.Windows.Summary {
                             }
                             dutyStat.ClearDuties.Add(new DutyResults() {
                                 CompletionTime = import.Time,
-                                Owner = "Imported clear"
+                                Owner = Loc.Tr("Imported clear")
                             });
                         }
                         dutyStat.RunsSinceLastClear += (int)import.RunsSinceLastClear!;
@@ -313,7 +317,7 @@ namespace MapPartyAssist.Windows.Summary {
                 MaximumSize = _statsWindow.SizeConstraints!.Value.MaximumSize,
             };
             if(_dutyStats.Count == 0) {
-                ImGui.TextDisabled("No duty results for given filters.");
+                ImGui.TextDisabled(Loc.Tr("No duty results for given filters."));
             }
             using(var table = ImRaii.Table("statsTable", 2, ImGuiTableFlags.NoClip | ImGuiTableFlags.NoKeepColumnsVisible)) {
                 for(int i = 0; i < _dutyStats.Count; i++) {
@@ -342,26 +346,29 @@ namespace MapPartyAssist.Windows.Summary {
             string passiveSuccessVerb = isRoulette ? "Completed" : "Reached";
             string stageNoun = isRoulette ? "summon" : "chamber";
             string gateNoun = isRoulette ? "summon" : "gate";
+            var passiveSuccessVerbDisplay = Loc.Tr(passiveSuccessVerb);
+            var stageNounDisplay = Loc.Tr(stageNoun);
+            var gateNounDisplay = Loc.Tr(gateNoun);
 
             //Draw
             using(var table = ImRaii.Table($"##{dutyId}-Table", 3, ImGuiTableFlags.NoBordersInBody | ImGuiTableFlags.NoHostExtendX | ImGuiTableFlags.NoClip | ImGuiTableFlags.NoKeepColumnsVisible)) {
                 if(table) {
-                    ImGui.TableSetupColumn("checkpoint", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 158f);
-                    ImGui.TableSetupColumn($"rawNumber", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
-                    ImGui.TableSetupColumn($"rate", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
+                    ImGui.TableSetupColumn(Loc.Tr("checkpoint"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 158f);
+                    ImGui.TableSetupColumn(Loc.Tr("count"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
+                    ImGui.TableSetupColumn(Loc.Tr("rate"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
 
                     ImGui.TableNextRow();
                     ImGui.TableNextColumn();
 
                     if(dutyStat.HasGil) {
-                        ImGui.Text("Total gil earned: ");
+                        ImGui.Text(Loc.Tr("Total gil earned:"));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.TotalGil.ToString("N0")}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
                     }
                     if(_timeFilter.StatRange != StatRange.SinceLastClear) {
-                        ImGui.Text("Total clears: ");
+                        ImGui.Text(Loc.Tr("Total clears:"));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.TotalClears}");
                         ImGui.TableNextColumn();
@@ -371,14 +378,14 @@ namespace MapPartyAssist.Windows.Summary {
                         ImGui.TableNextColumn();
                     }
                     if(_plugin.Configuration.DutyConfigurations[dutyId].DisplayDeaths) {
-                        ImGui.Text("Total wipes:");
-                        Tooltip("Inferred from last checkpoint.");
+                        ImGui.Text(Loc.Tr("Total wipes:"));
+                        Tooltip(Loc.Tr("Inferred from last checkpoint."));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.TotalWipes}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
                     }
-                    ImGui.Text("Total runs:");
+                    ImGui.Text(Loc.Tr("Total runs:"));
                     ImGui.TableNextColumn();
                     ImGui.Text($"{dutyStat.TotalRuns}");
                     ImGui.TableNextColumn();
@@ -388,11 +395,11 @@ namespace MapPartyAssist.Windows.Summary {
                         if(_plugin.Configuration.ProgressTableCount == ProgressTableCount.Last) {
                             for(int i = 0; i < dutyStat.EndChambers.Length; i++) {
                                 if(i == numChambers - 1) {
-                                    ImGui.Text($"{passiveSuccessVerb} final {stageNoun}:");
+                                    ImGui.Text(Loc.TrFormat("{0} final {1}:", passiveSuccessVerbDisplay, stageNounDisplay));
                                 } else {
                                     var ordinalIndex = isRoulette ? i + 2 : i + 1;
-                                    ImGui.Text($"Ejected at {StringHelper.AddOrdinal(ordinalIndex)} {gateNoun}:");
-                                    Tooltip("Also includes preceding wipes, abandons \nand timeouts.");
+                                    ImGui.Text(Loc.TrFormat("Ejected at {0} {1}:", StringHelper.AddOrdinal(ordinalIndex), gateNounDisplay));
+                                    Tooltip(Loc.Tr("Also includes preceding wipes, abandons \\nand timeouts."));
                                 }
                                 ImGui.TableNextColumn();
                                 ImGui.Text($"{dutyStat.EndChambers[i]}");
@@ -400,29 +407,29 @@ namespace MapPartyAssist.Windows.Summary {
                                 if(_plugin.Configuration.ProgressTableRate == ProgressTableRate.Previous
                                     && i != dutyStat.EndChambers.Length - 1 && ((i == 0 && dutyStat.TotalRuns != 0) || (i != 0 && dutyStat.OpenChambers[i - 1] != 0))) {
                                     ImGui.Text($"{string.Format("{0:P}", (double)1d - dutyStat.OpenChambersRates[i])}");
-                                    Tooltip("Calculated from previous stage.");
+                                    Tooltip(Loc.Tr("Calculated from previous stage."));
                                 } else if(_plugin.Configuration.ProgressTableRate == ProgressTableRate.Total && dutyStat.TotalRuns != 0) {
                                     ImGui.Text($"{string.Format("{0:P}", (double)dutyStat.EndChambers[i] / dutyStat.TotalRuns)}");
-                                    Tooltip("Calculated from total runs.");
+                                    Tooltip(Loc.Tr("Calculated from total runs."));
                                 }
                                 ImGui.TableNextColumn();
                             }
                         } else if(_plugin.Configuration.ProgressTableCount == ProgressTableCount.All) {
                             for(int i = 0; i < dutyStat.OpenChambers.Length; i++) {
                                 if(i == numChambers - 2) {
-                                    ImGui.Text($"{passiveSuccessVerb} final {stageNoun}:");
+                                    ImGui.Text(Loc.TrFormat("{0} final {1}:", passiveSuccessVerbDisplay, stageNounDisplay));
                                 } else {
-                                    ImGui.Text($"{passiveSuccessVerb} {StringHelper.AddOrdinal(i + 2)} {stageNoun}:");
+                                    ImGui.Text(Loc.TrFormat("{0} {1} {2}:", passiveSuccessVerbDisplay, StringHelper.AddOrdinal(i + 2), stageNounDisplay));
                                 }
                                 ImGui.TableNextColumn();
                                 ImGui.Text($"{dutyStat.OpenChambers[i]}");
                                 ImGui.TableNextColumn();
                                 if(_plugin.Configuration.ProgressTableRate == ProgressTableRate.Previous && ((i == 0 && dutyStat.TotalRuns != 0) || (i != 0 && dutyStat.OpenChambers[i - 1] != 0))) {
                                     ImGui.Text($"{string.Format("{0:P}", dutyStat.OpenChambersRates[i])}");
-                                    Tooltip("Calculated from previous stage.");
+                                    Tooltip(Loc.Tr("Calculated from previous stage."));
                                 } else if(_plugin.Configuration.ProgressTableRate == ProgressTableRate.Total && dutyStat.TotalRuns != 0) {
                                     ImGui.Text($"{string.Format("{0:P}", (double)dutyStat.OpenChambers[i] / dutyStat.TotalRuns)}");
-                                    Tooltip("Calculated from total runs.");
+                                    Tooltip(Loc.Tr("Calculated from total runs."));
                                 }
                                 ImGui.TableNextColumn();
                             }
@@ -434,17 +441,17 @@ namespace MapPartyAssist.Windows.Summary {
                     ImGui.TableNextColumn();
 
                     if(dutyStat.HasSequence) {
-                        //todo make this a configuration variable
+                        // Consider exposing this as a configuration option
                         if(_plugin.Configuration.DutyConfigurations[dutyId].DisplayClearSequence) {
                             for(int i = 0; i < dutyStat.ClearSequence.Count; i++) {
                                 if(_plugin.Configuration.ClearSequenceCount == ClearSequenceCount.Last) {
-                                    ImGui.Text($"{StringHelper.AddOrdinal(i + 1)} clear:");
-                                    Tooltip(i == 0 ? "Runs since start." : "Runs since preceding clear.");
+                                    ImGui.Text(Loc.TrFormat("{0} clear:", StringHelper.AddOrdinal(i + 1)));
+                                    Tooltip(i == 0 ? Loc.Tr("Runs since start.") : Loc.Tr("Runs since preceding clear."));
                                     ImGui.TableNextColumn();
                                     ImGui.Text($"{dutyStat.ClearSequence[i].ToString().PadRight(3)}");
                                 } else {
-                                    ImGui.Text($"{StringHelper.AddOrdinal(i + 1)} clear (total):");
-                                    Tooltip("Total runs at time.");
+                                    ImGui.Text(Loc.TrFormat("{0} clear (total):", StringHelper.AddOrdinal(i + 1)));
+                                    Tooltip(Loc.Tr("Total runs at time."));
                                     ImGui.TableNextColumn();
                                     int clearTotal = dutyStat.ClearSequence[i];
                                     dutyStat.ClearSequence.GetRange(0, i).ForEach(x => clearTotal += x);
@@ -463,7 +470,7 @@ namespace MapPartyAssist.Windows.Summary {
 
                         if(dutyStat.TotalClears > 0 && _plugin.Configuration.ClearSequenceCount == ClearSequenceCount.Last) {
                             if(_plugin.Configuration.ClearSequenceCount == ClearSequenceCount.Last) {
-                                ImGui.Text("Runs since last clear: ");
+                                ImGui.Text(Loc.Tr("Runs since last clear:"));
                                 ImGui.TableNextColumn();
                                 ImGui.Text($"{dutyStat.RunsSinceLastClear}");
                                 ImGui.TableNextColumn();
@@ -482,39 +489,39 @@ namespace MapPartyAssist.Windows.Summary {
                 using(var table = ImRaii.Table($"##{dutyId}-SummonTable", 3, ImGuiTableFlags.NoBordersInBody | ImGuiTableFlags.NoHostExtendX | ImGuiTableFlags.NoClip | ImGuiTableFlags.NoKeepColumnsVisible)) {
                     if(table) {
                         ImGui.TableSetupColumn("summon", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 158f);
-                        ImGui.TableSetupColumn($"rawNumber", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
-                        ImGui.TableSetupColumn($"rate", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
+                        ImGui.TableSetupColumn(Loc.Tr("count"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
+                        ImGui.TableSetupColumn(Loc.Tr("rate"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 45f);
 
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn();
-                        ImGui.Text("Lesser summons: ");
+                        ImGui.Text(Loc.Tr("Lesser summons:"));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.SummonTotals[Summon.Lesser]}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
-                        ImGui.Text("Greater summons: ");
+                        ImGui.Text(Loc.Tr("Greater summons:"));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.SummonTotals[Summon.Greater]}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
-                        ImGui.Text("Elder summons: ");
+                        ImGui.Text(Loc.Tr("Elder summons:"));
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.SummonTotals[Summon.Elder]}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
                         if(structure == DutyStructure.Roulette) {
-                            ImGui.Text("Circle shifts: ");
+                            ImGui.Text(Loc.Tr("Circle shifts:"));
                         } else if(structure == DutyStructure.Slots) {
-                            ImGui.Text("Final summons: ");
+                            ImGui.Text(Loc.Tr("Final summons:"));
                         }
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.SummonTotals[Summon.Gold]}");
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
                         if(structure == DutyStructure.Roulette) {
-                            ImGui.Text("Abominations: ");
+                            ImGui.Text(Loc.Tr("Abominations:"));
                         } else if(structure == DutyStructure.Slots) {
-                            ImGui.Text("Fever dreams: ");
+                            ImGui.Text(Loc.Tr("Fever dreams:"));
                         }
                         ImGui.TableNextColumn();
                         ImGui.Text($"{dutyStat.SummonTotals[Summon.Silver]}");
@@ -534,3 +541,11 @@ namespace MapPartyAssist.Windows.Summary {
         }
     }
 }
+
+
+
+
+
+
+
+

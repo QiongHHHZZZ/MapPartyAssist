@@ -1,10 +1,11 @@
-﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 
 namespace MapPartyAssist.Windows.Filter {
     public class PartyMemberFilter : DataFilter {
-        public override string Name => "P. Members";
-        public override string HelpMessage => "Comma-separate multiple party members.";
+        public override string Name => Loc.Tr("P. Members");
+        public override string HelpMessage => Loc.Tr("Comma-separate multiple party members.");
         public string PartyMembersRaw { get; set; } = "";
         public bool OnlySolo { get; set; }
         internal string[] PartyMembers { get; private set; } = new string[0];
@@ -40,7 +41,7 @@ namespace MapPartyAssist.Windows.Filter {
                 }
             }
 
-            if(ImGui.Checkbox("Solo only", ref onlySolo)) {
+            if(ImGui.Checkbox(Loc.Tr("Solo only"), ref onlySolo)) {
                 _plugin!.DataQueue.QueueDataOperation(() => {
                     OnlySolo = onlySolo;
                     Refresh();
@@ -49,3 +50,4 @@ namespace MapPartyAssist.Windows.Filter {
         }
     }
 }
+

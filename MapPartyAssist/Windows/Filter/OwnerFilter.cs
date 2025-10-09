@@ -1,9 +1,10 @@
-﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 
 namespace MapPartyAssist.Windows.Filter {
     public class OwnerFilter : DataFilter {
-        public override string Name => "Map Owner";
+        public override string Name => Loc.Tr("Map Owner");
         public string Owner { get; set; } = "";
         private string _lastValue = "";
 
@@ -32,3 +33,4 @@ namespace MapPartyAssist.Windows.Filter {
         }
     }
 }
+

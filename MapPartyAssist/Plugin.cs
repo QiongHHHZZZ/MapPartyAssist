@@ -1,4 +1,4 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
@@ -11,12 +11,14 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Services;
 using MapPartyAssist.Settings;
 using MapPartyAssist.Windows;
 using Newtonsoft.Json;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -40,9 +42,120 @@ namespace MapPartyAssist {
     }
 
     public sealed class Plugin : IDalamudPlugin {
-        public string Name => "Map Party Assist";
+        public string Name => "地图派对助手";
         private const string DatabaseName = "data.db";
-        public readonly ClientLanguage[] SupportedLanguages = { ClientLanguage.English, ClientLanguage.French, ClientLanguage.German, ClientLanguage.Japanese };
+        private static readonly ClientLanguage[] BaseSupportedLanguages = { ClientLanguage.English, ClientLanguage.French, ClientLanguage.German, ClientLanguage.Japanese };
+
+        private static readonly Dictionary<string, uint> BNpcNameFallbackRowIds = new(StringComparer.OrdinalIgnoreCase) {
+            { "Altar Airavata", 7601u },
+            { "Altar Apanda", 7628u },
+            { "Altar Arachne", 7593u },
+            { "Altar Beast", 7588u },
+            { "Altar Chimera", 7591u },
+            { "Altar Diresaur", 7627u },
+            { "Altar Dullahan", 7585u },
+            { "Altar Kelpie", 7589u },
+            { "Altar Mandragora", 7600u },
+            { "Altar Manticore", 7629u },
+            { "Altar Skatene", 7587u },
+            { "Altar Totem", 7586u },
+            { "Daen Ose the Avaricious", 9808u },
+            { "Fuath Troublemaker", 9786u },
+            { "Greedy Pixie", 9797u },
+            { "Gymnasiou Acheloios", 12019u },
+            { "Gymnasiou Leon", 11997u },
+            { "Gymnasiou Mandragoras", 12022u },
+            { "Gymnasiou Megakantha", 12009u },
+            { "Gymnasiou Meganereis", 12014u },
+            { "Gymnasiou Pithekos", 12001u },
+            { "Gymnasiou Satyros", 12003u },
+            { "Gymnasiou Sphinx", 12016u },
+            { "Gymnasiou Styphnolobion", 12012u },
+            { "Gymnasiou Tigris", 11999u },
+            { "Gymnasiou Triton", 12006u },
+            { "Hati", 7590u },
+            { "Hippomenes", 12030u },
+            { "Lampas Chrysine", 12021u },
+            { "Lyssa Chrysine", 12024u },
+            { "Narkissos", 12029u },
+            { "Phaethon", 12026u },
+            { "Secret Basket", 9784u },
+            { "Secret Cladoselache", 9778u },
+            { "Secret Djinn", 9788u },
+            { "Secret Keeper", 9807u },
+            { "Secret Korrigan", 9806u },
+            { "Secret Pegasus", 9793u },
+            { "Secret Porxie", 9795u },
+            { "Secret Serpent", 9776u },
+            { "Secret Swallow", 9782u },
+            { "Secret Undine", 9790u },
+            { "Secret Worm", 9780u },
+            { "The Great Gold Whisker", 7599u },
+            { "The Older One", 7597u },
+            { "The Winged", 7595u },
+        };
+
+        private static readonly Dictionary<string, Dictionary<ClientLanguage, string>> BNpcNameManualTranslations = new(StringComparer.OrdinalIgnoreCase) {
+            { "Altar Airavata", new() { { LanguageHelper.ChineseSimplified, "神殿艾拉瓦塔" } } },
+            { "Altar Apanda", new() { { LanguageHelper.ChineseSimplified, "神殿阿班达" } } },
+            { "Altar Arachne", new() { { LanguageHelper.ChineseSimplified, "神殿阿剌克涅" } } },
+            { "Altar Beast", new() { { LanguageHelper.ChineseSimplified, "神殿巨兽" } } },
+            { "Altar Chimera", new() { { LanguageHelper.ChineseSimplified, "神殿奇美拉" } } },
+            { "Altar Diresaur", new() { { LanguageHelper.ChineseSimplified, "神殿变种龙" } } },
+            { "Altar Dullahan", new() { { LanguageHelper.ChineseSimplified, "神殿无头骑士" } } },
+            { "Altar Kelpie", new() { { LanguageHelper.ChineseSimplified, "神殿凯尔派" } } },
+            { "Altar Mandragora", new() { { LanguageHelper.ChineseSimplified, "神殿蔓德拉" } } },
+            { "Altar Manticore", new() { { LanguageHelper.ChineseSimplified, "神殿曼提克" } } },
+            { "Altar Skatene", new() { { LanguageHelper.ChineseSimplified, "神殿斯卡尼特" } } },
+            { "Altar Totem", new() { { LanguageHelper.ChineseSimplified, "神殿图腾" } } },
+            { "Daen Ose the Avaricious", new() { { LanguageHelper.ChineseSimplified, "视财如命 代恩·奥瑟" } } },
+            { "Fuath Troublemaker", new() { { LanguageHelper.ChineseSimplified, "捣乱的水妖" } } },
+            { "Greedy Pixie", new() { { LanguageHelper.ChineseSimplified, "寻宝的仙子" } } },
+            { "Gymnasiou Acheloios", new() { { LanguageHelper.ChineseSimplified, "育体阿刻罗俄斯" } } },
+            { "Gymnasiou Leon", new() { { LanguageHelper.ChineseSimplified, "育体雄狮" } } },
+            { "Gymnasiou Mandragoras", new() { { LanguageHelper.ChineseSimplified, "育体蔓德拉" } } },
+            { "Gymnasiou Megakantha", new() { { LanguageHelper.ChineseSimplified, "育体巨型刺口花" } } },
+            { "Gymnasiou Meganereis", new() { { LanguageHelper.ChineseSimplified, "育体巨型涅瑞伊斯" } } },
+            { "Gymnasiou Pithekos", new() { { LanguageHelper.ChineseSimplified, "育体猿猴" } } },
+            { "Gymnasiou Satyros", new() { { LanguageHelper.ChineseSimplified, "育体萨提洛斯" } } },
+            { "Gymnasiou Sphinx", new() { { LanguageHelper.ChineseSimplified, "育体斯芬克斯" } } },
+            { "Gymnasiou Styphnolobion", new() { { LanguageHelper.ChineseSimplified, "育体槐龙" } } },
+            { "Gymnasiou Tigris", new() { { LanguageHelper.ChineseSimplified, "育体猛虎" } } },
+            { "Gymnasiou Triton", new() { { LanguageHelper.ChineseSimplified, "育体特里同" } } },
+            { "Hati", new() { { LanguageHelper.ChineseSimplified, "哈提" } } },
+            { "Hippomenes", new() { { LanguageHelper.ChineseSimplified, "希波墨涅斯" } } },
+            { "Lampas Chrysine", new() { { LanguageHelper.ChineseSimplified, "金光拉姆帕斯" } } },
+            { "Lyssa Chrysine", new() { { LanguageHelper.ChineseSimplified, "金光吕萨" } } },
+            { "Narkissos", new() { { LanguageHelper.ChineseSimplified, "纳西索斯" } } },
+            { "Phaethon", new() { { LanguageHelper.ChineseSimplified, "法厄同" } } },
+            { "Secret Basket", new() { { LanguageHelper.ChineseSimplified, "神秘篮筐" } } },
+            { "Secret Cladoselache", new() { { LanguageHelper.ChineseSimplified, "神秘裂口鲨" } } },
+            { "Secret Djinn", new() { { LanguageHelper.ChineseSimplified, "神秘镇尼" } } },
+            { "Secret Keeper", new() { { LanguageHelper.ChineseSimplified, "神秘守卫" } } },
+            { "Secret Korrigan", new() { { LanguageHelper.ChineseSimplified, "神秘柯瑞甘" } } },
+            { "Secret Pegasus", new() { { LanguageHelper.ChineseSimplified, "神秘天马" } } },
+            { "Secret Porxie", new() { { LanguageHelper.ChineseSimplified, "神秘仙子猪" } } },
+            { "Secret Serpent", new() { { LanguageHelper.ChineseSimplified, "神秘巨蟒" } } },
+            { "Secret Swallow", new() { { LanguageHelper.ChineseSimplified, "神秘海燕" } } },
+            { "Secret Undine", new() { { LanguageHelper.ChineseSimplified, "神秘温蒂尼" } } },
+            { "Secret Worm", new() { { LanguageHelper.ChineseSimplified, "神秘巨虫" } } },
+            { "The Great Gold Whisker", new() { { LanguageHelper.ChineseSimplified, "金鲶大王" } } },
+            { "The Older One", new() { { LanguageHelper.ChineseSimplified, "神殿旧日灵偶" } } },
+            { "The Winged", new() { { LanguageHelper.ChineseSimplified, "神殿妖鸟" } } },
+        };
+
+
+        public IEnumerable<ClientLanguage> SupportedLanguages {
+            get {
+                foreach(var language in BaseSupportedLanguages) {
+                    yield return language;
+                }
+
+                if(LanguageHelper.TryGetChineseSimplified(out var chineseLanguage)) {
+                    yield return chineseLanguage;
+                }
+            }
+        }
 
         private const string CommandName = "/mparty";
         private const string ConfigCommandName = "/mpartyconfig";
@@ -146,31 +259,31 @@ namespace MapPartyAssist {
                 MainWindow = new MainWindow(this);
                 WindowSystem.AddWindow(MainWindow);
                 CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand) {
-                    HelpMessage = "Opens map tracker console."
+                    HelpMessage = Loc.Tr("Opens map tracker console.")
                 });
 
                 StatsWindow = new StatsWindow(this);
                 WindowSystem.AddWindow(StatsWindow);
                 CommandManager.AddHandler(StatsCommandName, new CommandInfo(OnStatsCommand) {
-                    HelpMessage = "Opens stats window."
+                    HelpMessage = Loc.Tr("Opens stats window.")
                 });
 
                 ConfigWindow = new ConfigWindow(this);
                 WindowSystem.AddWindow(ConfigWindow);
                 CommandManager.AddHandler(ConfigCommandName, new CommandInfo(OnConfigCommand) {
-                    HelpMessage = "Open settings window."
+                    HelpMessage = Loc.Tr("Open settings window.")
                 });
 
 #if DEBUG
                 TestFunctionWindow = new TestFunctionWindow(this);
                 WindowSystem.AddWindow(TestFunctionWindow);
                 CommandManager.AddHandler(TestCommandName, new CommandInfo(OnTestCommand) {
-                    HelpMessage = "Opens test functions window. (Debug)"
+                    HelpMessage = Loc.Tr("Opens test functions window. (Debug)")
                 });
 #endif
 
                 CommandManager.AddHandler(EditCommandName, new CommandInfo(OnEditCommand) {
-                    HelpMessage = "Toggle editing of maps/duty results."
+                    HelpMessage = Loc.Tr("Toggle editing of maps/duty results.")
                 });
 
 
@@ -229,7 +342,7 @@ namespace MapPartyAssist {
 
         public void Dispose() {
 #if DEBUG
-            Log.Debug("disposing plugin");
+            Log.Debug("插件正在卸载");
 #endif
 
             WindowSystem.RemoveAllWindows();
@@ -276,7 +389,7 @@ namespace MapPartyAssist {
 
         private void OnEditCommand(string command, string args) {
             AllowEdit = !AllowEdit;
-            ChatGui.Print($"Map Party Assist Edit Mode: {(AllowEdit ? "ON" : "OFF")}");
+            ChatGui.Print($"地图派对助手编辑模式：{(AllowEdit ? "开启" : "关闭")}");
         }
 
         private void DrawUI() {
@@ -350,39 +463,86 @@ namespace MapPartyAssist {
             uint? rowId = null;
             Type type = typeof(T);
             bool isPlural = column.Equals("Plural", StringComparison.OrdinalIgnoreCase);
+            string normalizedTarget = NormalizeComparisonString(data);
 
             if(!IsLanguageSupported(destinationLanguage) || !IsLanguageSupported(originLanguage)) {
-                throw new ArgumentException("Cannot translate to/from an unsupported client language.");
+                throw new ArgumentException("无法在未受支持的客户端语言之间进行翻译。");
             }
 
             //check to make sure column is string
-            var columnProperty = type.GetProperty(column) ?? throw new ArgumentException($"No property of name: {column} on type {type.FullName}");
+            var columnProperty = type.GetProperty(column) ?? throw new ArgumentException($"类型 {type.FullName} 上不存在名称为 {column} 的属性。");
             if(!columnProperty.PropertyType.IsAssignableTo(typeof(ReadOnlySeString))) {
-                throw new ArgumentException($"property {column} of type {columnProperty.PropertyType.FullName} on type {type.FullName} is not assignable to a SeString!");
+                throw new ArgumentException($"类型 {type.FullName} 的属性 {column}（{columnProperty.PropertyType.FullName}）无法转换为 SeString。");
             }
 
             //iterate over table to find rowId
             foreach(var row in DataManager.GetExcelSheet<T>((ClientLanguage)originLanguage)!) {
                 var rowData = columnProperty!.GetValue(row)?.ToString();
 
+                if(string.IsNullOrEmpty(rowData)) {
+                    continue;
+                }
+
                 //German declension placeholder replacement
-                if(originLanguage == ClientLanguage.German && rowData != null) {
+                if(originLanguage == ClientLanguage.German) {
                     var pronounProperty = type.GetProperty("Pronoun");
                     if(pronounProperty != null) {
                         int pronoun = Convert.ToInt32(pronounProperty.GetValue(row))!;
                         rowData = ReplaceGermanDeclensionPlaceholders(rowData, pronoun, isPlural, gramCase);
                     }
                 }
-                if(data.Equals(rowData, StringComparison.OrdinalIgnoreCase)) {
-                    rowId = row.RowId; break;
+
+                string normalizedRowData = NormalizeComparisonString(rowData);
+                if(string.Equals(normalizedTarget, normalizedRowData, StringComparison.OrdinalIgnoreCase)) {
+                    rowId = row.RowId;
+                    break;
                 }
             }
 
-            rowId = rowId ?? throw new ArgumentException($"'{data}' not found in table: {type.Name} for language: {originLanguage}.");
+            if(!rowId.HasValue && typeof(T) == typeof(BNpcName) && originLanguage == ClientLanguage.English) {
+                if(BNpcNameFallbackRowIds.TryGetValue(data, out var fallbackRowId)) {
+                    rowId = fallbackRowId;
+                }
+            }
+
+            if(!rowId.HasValue) {
+                if(typeof(T) == typeof(BNpcName) && TryGetBNpcNameManualTranslation(data, destinationLanguage, out var manualTranslation)) {
+                    return manualTranslation;
+                }
+
+                Log.Warning($"'{data}' not found in table: {type.Name} for language: {originLanguage}. Using original value.");
+                return data;
+            }
 
             //get data from destinationLanguage
-            var translatedRow = DataManager.GetExcelSheet<T>(destinationLanguage)!.Where(r => r.RowId == rowId).FirstOrDefault();
-            string? translatedString = columnProperty!.GetValue(translatedRow)?.ToString() ?? throw new ArgumentException($"row id {rowId} not found in table {type.Name} for language: {destinationLanguage}");
+            bool translatedRowFound = false;
+            T translatedRow = default;
+            foreach(var row in DataManager.GetExcelSheet<T>(destinationLanguage)!) {
+                if(row.RowId == rowId) {
+                    translatedRow = row;
+                    translatedRowFound = true;
+                    break;
+                }
+            }
+
+            if(!translatedRowFound) {
+                if(typeof(T) == typeof(BNpcName) && TryGetBNpcNameManualTranslation(data, destinationLanguage, out var manualTranslation)) {
+                    return manualTranslation;
+                }
+
+                Log.Warning($"Row id {rowId} not found in table {type.Name} for language: {destinationLanguage}. Using original value.");
+                return data;
+            }
+
+            string? translatedString = columnProperty!.GetValue(translatedRow)?.ToString();
+            if(string.IsNullOrEmpty(translatedString)) {
+                if(typeof(T) == typeof(BNpcName) && TryGetBNpcNameManualTranslation(data, destinationLanguage, out var manualTranslation)) {
+                    return manualTranslation;
+                }
+
+                Log.Warning($"Translation for row {rowId} in table {type.Name} and column {column} for language {destinationLanguage} is empty. Using original value.");
+                return data;
+            }
 
             //add German declensions.
             if(destinationLanguage == ClientLanguage.German) {
@@ -395,7 +555,33 @@ namespace MapPartyAssist {
 
             return translatedString;
         }
+        private static bool TryGetBNpcNameManualTranslation(string data, ClientLanguage destinationLanguage, out string translation) {
+            translation = string.Empty;
 
+            if(!BNpcNameManualTranslations.TryGetValue(data, out var translations)) {
+                return false;
+            }
+
+            if(translations.TryGetValue(destinationLanguage, out var value)) {
+                translation = value;
+                return true;
+            }
+
+            if(LanguageHelper.TryGetChineseSimplified(out var chineseLanguage) && destinationLanguage == chineseLanguage && translations.TryGetValue(chineseLanguage, out value)) {
+                translation = value;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string NormalizeComparisonString(string? value) {
+            if(string.IsNullOrWhiteSpace(value)) {
+                return string.Empty;
+            }
+
+            return Regex.Replace(value.Trim(), "\\s+", " ");
+        }
         //male = 0, female = 1, neuter = 2
         private static string ReplaceGermanDeclensionPlaceholders(string input, int gender, bool isPlural, GrammarCase gramCase) {
             if(isPlural) {
@@ -472,13 +658,13 @@ namespace MapPartyAssist {
             bool isPlural = column.Equals("Plural", StringComparison.OrdinalIgnoreCase);
 
             if(!IsLanguageSupported(language)) {
-                throw new ArgumentException($"Unsupported language: {language}");
+                throw new ArgumentException($"不支持的语言：{language}");
             }
 
             //check to make sure column is string
-            var columnProperty = type.GetProperty(column) ?? throw new ArgumentException($"No property of name: {column} on type {type.FullName}");
+            var columnProperty = type.GetProperty(column) ?? throw new ArgumentException($"类型 {type.FullName} 上不存在名称为 {column} 的属性。");
             if(!columnProperty.PropertyType.IsAssignableTo(typeof(ReadOnlySeString))) {
-                throw new ArgumentException($"property {column} of type {columnProperty.PropertyType.FullName} on type {type.FullName} is not assignable to a SeString!");
+                throw new ArgumentException($"类型 {type.FullName} 的属性 {column}（{columnProperty.PropertyType.FullName}）无法转换为 SeString。");
             }
 
             //iterate over table to find rowId
@@ -501,3 +687,15 @@ namespace MapPartyAssist {
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+

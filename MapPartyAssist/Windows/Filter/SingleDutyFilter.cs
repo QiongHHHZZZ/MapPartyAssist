@@ -1,4 +1,5 @@
-﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Linq;
 namespace MapPartyAssist.Windows.Filter {
     internal class SingleDutyFilter : DataFilter {
 
-        public override string Name => "Duty";
+        public override string Name => Loc.Tr("Duty");
         public int DutyId { get; set; }
         private Dictionary<int, string> _dutyNames = new();
 

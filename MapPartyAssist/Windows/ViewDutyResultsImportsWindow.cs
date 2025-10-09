@@ -1,8 +1,9 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System.Collections.Generic;
 using System.Numerics;
@@ -18,7 +19,7 @@ namespace MapPartyAssist.Windows {
 
         private SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
 
-        internal ViewDutyResultsImportsWindow(Plugin plugin, StatsWindow statsWindow) : base("Manage Imports") {
+        internal ViewDutyResultsImportsWindow(Plugin plugin, StatsWindow statsWindow) : base(Loc.Tr("Manage Imports")) {
             SizeConstraints = new WindowSizeConstraints {
                 MinimumSize = new Vector2(350, 150),
                 MaximumSize = new Vector2(500, 800)
@@ -59,7 +60,7 @@ namespace MapPartyAssist.Windows {
         }
 
         public override void Draw() {
-            if(ImGui.Button("New Import")) {
+            if(ImGui.Button(Loc.Tr("New Import"))) {
                 _addImportWindow.BringToFront();
                 if(!_addImportWindow.IsOpen) {
                     _addImportWindow.Position = new Vector2(ImGui.GetWindowPos().X + 50f * ImGuiHelpers.GlobalScale, ImGui.GetWindowPos().Y + 50f * ImGuiHelpers.GlobalScale);
@@ -67,17 +68,17 @@ namespace MapPartyAssist.Windows {
                 }
             }
             ImGui.SameLine();
-            ImGuiHelper.HelpMarker("Use imports to include stats that were tracked when the plugin was unavailable.");
+            ImGuiHelper.HelpMarker(Loc.Tr("Use imports to include stats that were tracked when the plugin was unavailable."));
 
             if(_imports.Count > 0) {
                 using(var child = ImRaii.Child("scrolling", new Vector2(0, -(25 + ImGui.GetStyle().ItemSpacing.Y) * ImGuiHelpers.GlobalScale), true)) {
                     if(child) {
                         using var table = ImRaii.Table($"AddTable", 4, ImGuiTableFlags.NoHostExtendX);
                         if(table) {
-                            ImGui.TableSetupColumn("time", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 130);
-                            ImGui.TableSetupColumn("duty", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 200);
-                            ImGui.TableSetupColumn("edit", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 30);
-                            ImGui.TableSetupColumn("delete", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 50);
+                            ImGui.TableSetupColumn(Loc.Tr("Time"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 130);
+                            ImGui.TableSetupColumn(Loc.Tr("Duty"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 200);
+                            ImGui.TableSetupColumn(Loc.Tr("Edit"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 30);
+                            ImGui.TableSetupColumn(Loc.Tr("Delete"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 50);
                             ImGui.TableNextRow();
                             ImGui.TableNextColumn();
 
@@ -91,7 +92,7 @@ namespace MapPartyAssist.Windows {
 
             if(_currentPage > 0) {
                 ImGui.SameLine();
-                if(ImGui.Button("Previous 100")) {
+                if(ImGui.Button(Loc.Tr("Previous 100"))) {
                     _plugin.DataQueue.QueueDataOperation(() => {
                         Refresh(_currentPage - 1);
                     });
@@ -101,7 +102,7 @@ namespace MapPartyAssist.Windows {
             //not sure if need to protect boundary
             if(_imports.Count >= 100) {
                 ImGui.SameLine();
-                if(ImGui.Button("Next 100")) {
+                if(ImGui.Button(Loc.Tr("Next 100"))) {
                     _plugin.DataQueue.QueueDataOperation(() => {
                         Refresh(_currentPage + 1);
                     });
@@ -115,26 +116,26 @@ namespace MapPartyAssist.Windows {
             ImGui.TableNextColumn();
             ImGui.Text($"{_plugin.DutyManager.Duties[import.DutyId].GetDisplayName()}");
             ImGui.TableNextColumn();
-            if(ImGui.Button($"Edit##{import.Id.ToString()}")) {
+            if(ImGui.Button(Loc.Tr("Edit") + $"##{import.Id.ToString()}")) {
                 _addImportWindow.Open(import);
             }
             ImGui.TableNextColumn();
             using(var popup = ImRaii.Popup($"{import.Id.ToString()}-DeletePopup")) {
                 if(popup) {
-                    ImGui.Text("Are you sure?");
-                    if(ImGui.Button($"Yes##{import.Id.ToString()}-ConfirmDelete")) {
+                    ImGui.Text(Loc.Tr("Are you sure?"));
+                    if(ImGui.Button(Loc.Tr("Yes") + $"##{import.Id.ToString()}-ConfirmDelete")) {
                         _plugin.DataQueue.QueueDataOperation(() => {
                             import.IsDeleted = true;
                             _plugin.StorageManager.UpdateDutyResultsImport(import);
                         });
                     }
                     ImGui.SameLine();
-                    if(ImGui.Button($"Cancel##{import.Id.ToString()}-CancelDelete")) {
+                    if(ImGui.Button(Loc.Tr("Cancel") + $"##{import.Id.ToString()}-CancelDelete")) {
                         ImGui.CloseCurrentPopup();
                     }
                 }
             }
-            if(ImGui.Button($"Delete##{import.Id.ToString()}")) {
+            if(ImGui.Button(Loc.Tr("Delete") + $"##{import.Id.ToString()}")) {
                 ImGui.OpenPopup($"{import.Id.ToString()}-DeletePopup");
             }
 

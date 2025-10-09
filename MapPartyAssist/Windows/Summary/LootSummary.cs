@@ -1,10 +1,11 @@
-﻿using Dalamud.Interface.Colors;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System;
 using System.Collections.Generic;
@@ -56,7 +57,7 @@ namespace MapPartyAssist.Windows.Summary {
             int newLootEligibleMaps = 0;
             int newTotalGilValueObtained = 0;
             int newTotalGilValueDropped = 0;
-            string newLootCSV = "Category,Quality,Name,Dropped,Obtained,Unit Price\n";
+            string newLootCSV = string.Join(",", new[] { Loc.Tr("Category"), Loc.Tr("Quality"), Loc.Tr("Name"), Loc.Tr("Dropped"), Loc.Tr("Obtained"), Loc.Tr("Unit Price") }) + "\n";
 
             List<string> selfPlayers = new();
             _plugin.StorageManager.GetPlayers().Query().Where(p => p.IsSelf).ToList().ForEach(p => {
@@ -161,7 +162,7 @@ namespace MapPartyAssist.Windows.Summary {
                 MinimumSize = new Vector2(300, _statsWindow.SizeConstraints!.Value.MinimumSize.Y),
                 MaximumSize = _statsWindow.SizeConstraints!.Value.MaximumSize,
             };
-            if(ImGui.Button("Copy CSV")) {
+            if(ImGui.Button(Loc.Tr("Copy CSV"))) {
                 Task.Run(() => {
                     ImGui.SetClipboardText(LootCSV);
                 });
@@ -173,32 +174,32 @@ namespace MapPartyAssist.Windows.Summary {
             //    //_plugin.Configuration.Save();
             //    //SortByColumn((SortableColumn)sortSpecs.Specs.ColumnUserID, sortSpecs.Specs.SortDirection);
             //}
-            ImGui.Text("Use Pins: ");
+            ImGui.Text(Loc.Tr("Use Pins:"));
             ImGui.SameLine();
             if(ImGuiComponents.ToggleButton("##includePins", ref _includePins)) {
                 _triggerSort = true;
             }
-            ImGui.Text($"Eligible maps: {_lootEligibleMaps} Eligible duties: {_lootEligibleRuns}");
+            ImGui.Text(Loc.TrFormat("Eligible maps: {0} Eligible duties: {1}", _lootEligibleMaps, _lootEligibleRuns));
             ImGui.SameLine();
-            ImGuiHelper.HelpMarker("Loot tracking introduced in version 2.0.0.0. Legacy maps/duties are not counted.");
-            ImGui.Text($"Estimated total gil value dropped: {string.Format(_totalGilValueDropped.ToString("N0"))}");
+            ImGuiHelper.HelpMarker(Loc.Tr("Loot tracking introduced in version 2.0.0.0. Legacy maps/duties are not counted."));
+            ImGui.Text(Loc.TrFormat("Estimated total gil value dropped: {0}", _totalGilValueDropped.ToString("N0")));
             ImGui.SameLine();
-            ImGui.Text($"Estimated total gil value obtained: {string.Format(_totalGilValueObtained.ToString("N0"))}");
+            ImGui.Text(Loc.TrFormat("Estimated total gil value obtained: {0}", _totalGilValueObtained.ToString("N0")));
             ImGui.SameLine();
-            ImGuiHelper.HelpMarker("Enable market board pricing in settings window to see pricing data.\n\nRight-click table header to add more columns.");
+            ImGuiHelper.HelpMarker(Loc.Tr("Enable market board pricing in settings window to see pricing data.\n\nRight-click table header to add more columns."));
 
             using(ImRaii.Child("scrolling", new Vector2(0, -(25 + ImGui.GetStyle().ItemSpacing.Y) * ImGuiHelpers.GlobalScale), false)) {
                 using(var table = ImRaii.Table($"loottable", 8, ImGuiTableFlags.Sortable | ImGuiTableFlags.Hideable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable
                     | ImGuiTableFlags.ScrollY, new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y))) {
                     if(table) {
-                        ImGui.TableSetupColumn("Category", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 55f, (uint)SortableColumn.Category);
-                        ImGui.TableSetupColumn("Quality", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 55f, (uint)SortableColumn.IsHQ);
-                        ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 200f, (uint)SortableColumn.Name);
-                        ImGui.TableSetupColumn("Dropped", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 65f, (uint)SortableColumn.DroppedQuantity);
-                        ImGui.TableSetupColumn("Obtained", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.ObtainedQuantity);
-                        ImGui.TableSetupColumn("Unit Price", ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.UnitPrice);
-                        ImGui.TableSetupColumn("Dropped Value", ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.DroppedValue);
-                        ImGui.TableSetupColumn("Obtained Value", ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.ObtainedValue);
+                        ImGui.TableSetupColumn(Loc.Tr("Category"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 55f, (uint)SortableColumn.Category);
+                        ImGui.TableSetupColumn(Loc.Tr("Quality"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 55f, (uint)SortableColumn.IsHQ);
+                        ImGui.TableSetupColumn(Loc.Tr("Name"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 200f, (uint)SortableColumn.Name);
+                        ImGui.TableSetupColumn(Loc.Tr("Dropped"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 65f, (uint)SortableColumn.DroppedQuantity);
+                        ImGui.TableSetupColumn(Loc.Tr("Obtained"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.ObtainedQuantity);
+                        ImGui.TableSetupColumn(Loc.Tr("Unit Price"), ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.UnitPrice);
+                        ImGui.TableSetupColumn(Loc.Tr("Dropped Value"), ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.DroppedValue);
+                        ImGui.TableSetupColumn(Loc.Tr("Obtained Value"), ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.DefaultHide, ImGuiHelpers.GlobalScale * 70f, (uint)SortableColumn.ObtainedValue);
 
                         ImGui.TableSetupScrollFreeze(0, 1);
                         ImGui.TableHeadersRow();
@@ -246,7 +247,7 @@ namespace MapPartyAssist.Windows.Summary {
                             ImGui.TextColored(textColor, $"{lootResult.Value.ItemName.PadRight(20)}");
                             using(var popup = ImRaii.ContextPopupItem($"##{lootResult.Key.ItemId}{lootResult.Key.IsHQ}--ContextMenu", ImGuiPopupFlags.MouseButtonRight)) {
                                 if(popup) {
-                                    if(ImGui.MenuItem($"Pin item##{lootResult.Key.ItemId}{lootResult.Key.IsHQ}", ImU8String.Empty, isPinned)) {
+                                    if(ImGui.MenuItem(Loc.Tr("Pin item") + $"##{lootResult.Key.ItemId}{lootResult.Key.IsHQ}", ImU8String.Empty, isPinned)) {
                                         if(!isPinned) {
                                             _plugin.Log.Verbose($"pinning: {lootResult.Value.ItemName}");
                                             //_pins.Add(lootResult.Key);
@@ -283,7 +284,7 @@ namespace MapPartyAssist.Windows.Summary {
 
             if(_currentPage > 0) {
                 ImGui.SameLine();
-                if(ImGui.Button($"Previous {_maxPageSize}")) {
+                if(ImGui.Button(Loc.TrFormat("Previous {0}", _maxPageSize))) {
                     _plugin.DataQueue.QueueDataOperation(() => {
                         GoToPage(_currentPage - 1);
                     });
@@ -293,7 +294,7 @@ namespace MapPartyAssist.Windows.Summary {
             if((_currentPage + 1) * _maxPageSize <= _lootResults.Count) {
                 ImGui.SameLine();
                 ImGui.SetCursorPosX(ImGui.GetContentRegionMax().X - 65f * ImGuiHelpers.GlobalScale);
-                if(ImGui.Button($"Next {_maxPageSize}")) {
+                if(ImGui.Button(Loc.TrFormat("Next {0}", _maxPageSize))) {
                     _plugin.DataQueue.QueueDataOperation(() => {
                         GoToPage(_currentPage + 1);
                     });
@@ -322,13 +323,13 @@ namespace MapPartyAssist.Windows.Summary {
                     comparator = (r) => r.Value.Category;
                     break;
                 case SortableColumn.UnitPrice:
-                    comparator = (r) => r.Value.AveragePrice;
+                    comparator = (r) => r.Value.AveragePrice ?? 0;
                     break;
                 case SortableColumn.DroppedValue:
-                    comparator = (r) => r.Value.DroppedValue;
+                    comparator = (r) => r.Value.DroppedValue ?? 0;
                     break;
                 case SortableColumn.ObtainedValue:
-                    comparator = (r) => r.Value.ObtainedValue;
+                    comparator = (r) => r.Value.ObtainedValue ?? 0;
                     break;
                 default:
                     comparator = (r) => r;
@@ -351,3 +352,5 @@ namespace MapPartyAssist.Windows.Summary {
         }
     }
 }
+
+

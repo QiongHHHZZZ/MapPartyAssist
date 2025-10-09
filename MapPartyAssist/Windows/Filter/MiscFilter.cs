@@ -1,11 +1,12 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 
 namespace MapPartyAssist.Windows.Filter {
     public class MiscFilter : DataFilter {
-        public override string Name => "Other";
+        public override string Name => Loc.Tr("Other");
 
         public bool LootOnly { get; set; }
 
@@ -29,7 +30,7 @@ namespace MapPartyAssist.Windows.Filter {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 bool lootOnly = LootOnly;
-                if(ImGui.Checkbox("Must have loot", ref lootOnly)) {
+                if(ImGui.Checkbox(Loc.Tr("Must have loot"), ref lootOnly)) {
                     _plugin!.DataQueue.QueueDataOperation(() => {
                         LootOnly = lootOnly;
                         Refresh();
@@ -37,7 +38,7 @@ namespace MapPartyAssist.Windows.Filter {
                 }
                 ImGui.TableNextColumn();
                 bool showDeleted = ShowDeleted;
-                if(ImGui.Checkbox("Show deleted/incomplete", ref showDeleted)) {
+                if(ImGui.Checkbox(Loc.Tr("Show deleted/incomplete"), ref showDeleted)) {
                     _plugin!.DataQueue.QueueDataOperation(() => {
                         ShowDeleted = showDeleted;
                         Refresh();
@@ -47,3 +48,4 @@ namespace MapPartyAssist.Windows.Filter {
         }
     }
 }
+

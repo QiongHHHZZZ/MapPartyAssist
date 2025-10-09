@@ -1,4 +1,4 @@
-﻿using Dalamud.Game;
+using Dalamud.Game;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text;
@@ -8,6 +8,7 @@ using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,6 @@ using System.Threading.Tasks;
 namespace MapPartyAssist.Services {
     //internal service for managing treasure maps and map links
     internal class MapManager : IDisposable {
-        private MPAMap? _lastMap;
         //internal MPAMap? LastMap {
         //    get {
         //        if(_lastMap is not null) {
@@ -141,7 +141,7 @@ namespace MapPartyAssist.Services {
             _plugin = plugin;
             _plugin.ChatGui.CheckMessageHandled += OnChatMessage;
             _plugin.ClientState.TerritoryChanged += OnTerritoryChanged;
-            //_plugin.AddonLifecycle.RegisterListener(AddonEvent.PreUpdate, "_ToDoList", CheckForTreasureHunt);
+            //_plugin.AddonLifecycle.RegisterListener(AddonEvent.PreUpdate, "_To" + "DoList", CheckForTreasureHunt);
 
             ResetDigStatus();
         }
@@ -161,7 +161,7 @@ namespace MapPartyAssist.Services {
         }
 
         private unsafe void CheckForTreasureHunt(AddonEvent type, AddonArgs args) {
-            //_plugin.Log.Debug("pre refresh todolist!");
+            //_plugin.Log.Debug("pre refresh task list!");
             var addon = (AtkUnitBase*)args.Addon.Address;
             if(addon == null) {
                 return;
@@ -176,7 +176,7 @@ namespace MapPartyAssist.Services {
             var dutyName = dutyNameNode->GetAsAtkTextNode()->NodeText.ToString();
             //var rowId = _plugin.GetRowId<Addon>(dutyNameNode->GetAsAtkTextNode()->NodeText.ToString(), "Text");
 
-            if(baseNode->IsVisible() && TreasureHuntRegex[_plugin.ClientState.ClientLanguage].IsMatch(dutyName)) {
+            if(baseNode->IsVisible() && GetRegex(TreasureHuntRegex, _plugin.ClientState.ClientLanguage).IsMatch(dutyName)) {
                 if(!_boundByMapDuty) {
                     _plugin.Log.Debug($"Bound by map duty!");
                     _portalBlockUntil = DateTime.UnixEpoch;
@@ -259,7 +259,7 @@ namespace MapPartyAssist.Services {
 
             if((int)type == 2361) {
                 //party member opens portal while not blocked
-                if(EnterPortalRegex[_plugin.ClientState.ClientLanguage].IsMatch(message)) {
+                if(GetRegex(EnterPortalRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     _plugin.Log.Debug("Entering portal...");
                     if(_portalBlockUntil <= messageTime) {
                         //thief's maps
@@ -267,7 +267,7 @@ namespace MapPartyAssist.Services {
                         isPortal = true;
                         newMapFound = true;
                     } else {
-                        //TODO compare to last map to verify ownership
+                        // Compare to last map to verify ownership
                         if(lastMap != null) {
                             isChange = true;
                             lastMap.IsPortal = true;
@@ -276,10 +276,10 @@ namespace MapPartyAssist.Services {
                 }
             } else if((int)type == 2105 || (int)type == 2233) {
                 //self map detection
-                if(ConsumedMapRegex[_plugin.ClientState.ClientLanguage].IsMatch(message)) {
+                if(GetRegex(ConsumedMapRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     _plugin.Log.Debug("Map consumed...");
                     newMapFound = true;
-                    mapType = MapNameRegex[_plugin.ClientState.ClientLanguage].Match(message).ToString();
+                    mapType = GetRegex(MapNameRegex, _plugin.ClientState.ClientLanguage).Match(message).ToString();
                     if(!mapType.IsNullOrEmpty()) {
                         //this is bad!
                         try {
@@ -292,19 +292,20 @@ namespace MapPartyAssist.Services {
                     //_lastMapTime = messageTime;
                     //clear dig info just in case to prevent double-counting map if another player uses dig at the same time
                     ResetDigStatus();
-                } else if(DiscoverCofferRegex[_plugin.ClientState.ClientLanguage].IsMatch(message)) {
+                } else if(GetRegex(DiscoverCofferRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     _plugin.Log.Debug("Coffer discovered...");
                     //find (non-current PC) party member with the closest matching dig time and assume they are owner
                     _boundByMapDuty = true;
                     _boundByMapDutyDelayed = true;
-                    _lockedInDiggerKey = GetLikelyMapOwner(messageTime, _plugin.GameStateManager.GetCurrentPlayer());
-                    if(_lockedInDiggerKey.IsNullOrEmpty() && !IsPlayerCandidateOwner(messageTime, _plugin.GameStateManager.GetCurrentPlayer())) {
-                        _plugin.Log.Warning($"No eligible map owner detected for discovered coffer!");
-                        SetStatus("Unable to determine map owner!", StatusLevel.ERROR);
+                    var currentPlayer = _plugin.GameStateManager.GetCurrentPlayer();
+                    _lockedInDiggerKey = currentPlayer != null ? GetLikelyMapOwner(messageTime, currentPlayer) : GetLikelyMapOwner(messageTime);
+                    if(_lockedInDiggerKey.IsNullOrEmpty() && !IsPlayerCandidateOwner(messageTime, currentPlayer)) {
+                        _plugin.Log.Warning("未能确定新发现宝箱的地图持有人！");
+                        SetStatus(Loc.Tr("Unable to determine map owner!"), StatusLevel.ERROR);
                     }
                     //LogMessage: 3756, 9361, 9363
                     //this can trigger in excitatron 6000
-                } else if(OpenCofferRegex[_plugin.ClientState.ClientLanguage].IsMatch(message) && _plugin.Functions.GetCurrentDutyId() == 0) {
+                } else if(GetRegex(OpenCofferRegex, _plugin.ClientState.ClientLanguage).IsMatch(message) && _plugin.Functions.GetCurrentDutyId() == 0) {
                     _plugin.Log.Debug("Coffer opened...");
                     //add delay because this message occurs before "crumbles into dust" to avoid double-counting with self-dig
                     Task.Delay(_addMapDelaySeconds * 1000).ContinueWith(t => {
@@ -313,22 +314,22 @@ namespace MapPartyAssist.Services {
                                 bool isAmbiguous = _candidateCount > 1;
                                 AddMap(_plugin.GameStateManager.CurrentPartyList[_lockedInDiggerKey], null, null, false, false, isAmbiguous);
                                 if(isAmbiguous) {
-                                    _plugin.Log.Warning($"Multiple map owner candidates detected!");
-                                    SetStatus("Multiple map owner candidates found, verify last map ownership.", StatusLevel.CAUTION);
+                                    _plugin.Log.Warning("检测到多个可能的地图持有人！");
+                                    SetStatus(Loc.Tr("Multiple map owner candidates found, verify last map ownership."), StatusLevel.CAUTION);
                                 }
 
                             } else if((messageTime - _lastMapTime).TotalMilliseconds > _lastMapAddedThresholdMS) {
                                 //need this in case player used a false dig out of range
                                 AddMap(null);
-                                _plugin.Log.Warning($"No eligible map owner detected on opened coffer!");
-                                SetStatus("Unable to determine map owner, drag map to player name!", StatusLevel.ERROR);
+                                _plugin.Log.Warning("未能确定已打开宝箱的地图持有人！");
+                                SetStatus(Loc.Tr("Unable to determine map owner, drag map to player name!"), StatusLevel.ERROR);
                             }
                             //have to reset here in case you fail to defeat the treasure chest enemies -_-
                             ResetDigStatus();
                         });
                     });
                     //LogMessage: 3765
-                } else if(DefeatAllRegex[_plugin.ClientState.ClientLanguage].IsMatch(message.ToString())) {
+                } else if(GetRegex(DefeatAllRegex, _plugin.ClientState.ClientLanguage).IsMatch(message.ToString())) {
                     _plugin.Log.Debug("Enemies defeated...");
                     ResetDigStatus();
                     //block portals from adding maps for a brief period to avoid double counting
@@ -336,30 +337,36 @@ namespace MapPartyAssist.Services {
                     _portalBlockUntil = DateTime.Now.AddSeconds(_portalBlockSeconds);
                 }
             } else if((int)type == 4139 || (int)type == 2091) {
-                if(SelfDigRegex[_plugin.ClientState.ClientLanguage].IsMatch(message)) {
-                    if(_diggers.ContainsKey(_plugin.GameStateManager.GetCurrentPlayer())) {
-                        _diggers[_plugin.GameStateManager.GetCurrentPlayer()] = messageTime;
-                    } else {
-                        _diggers.Add(_plugin.GameStateManager.GetCurrentPlayer(), messageTime);
+                if(GetRegex(SelfDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
+                    var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
+                    if(!string.IsNullOrEmpty(currentPlayerKey)) {
+                        if(_diggers.ContainsKey(currentPlayerKey)) {
+                            _diggers[currentPlayerKey] = messageTime;
+                        } else {
+                            _diggers.Add(currentPlayerKey, messageTime);
+                        }
                     }
                     _plugin.Log.Debug($"You used Dig...");
-                } else if(PartyMemberDigRegex[_plugin.ClientState.ClientLanguage].IsMatch(message.ToString())) {
+                } else if(GetRegex(PartyMemberDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message.ToString())) {
                     //no payload on Japanese self-dig or maybe others from same world...?
                     if(playerKey is null) {
-                        var nominalAlias = DutyManager.PlayerAliasRegex[_plugin.ClientState.ClientLanguage].Match(message);
+                        var nominalAlias = LanguageHelper.GetValue(DutyManager.PlayerAliasRegex, _plugin.ClientState.ClientLanguage).Match(message);
                         playerKey = _plugin.GameStateManager.MatchAliasToPlayer(nominalAlias.Value);
                     }
 
-                    var diggerKey = _plugin.GameStateManager.MatchAliasToPlayer(playerKey ?? _plugin.GameStateManager.GetCurrentPlayer());
-                    _plugin.Log.Debug($"{diggerKey} used Dig...");
-                    if(_diggers.ContainsKey(diggerKey)) {
-                        _diggers[diggerKey] = messageTime;
-                    } else {
-                        _diggers.Add(diggerKey, messageTime);
+                    var resolvedPlayer = playerKey ?? _plugin.GameStateManager.GetCurrentPlayer();
+                    var diggerKey = resolvedPlayer != null ? _plugin.GameStateManager.MatchAliasToPlayer(resolvedPlayer) : null;
+                    if(!diggerKey.IsNullOrEmpty()) {
+                        _plugin.Log.Debug($"{diggerKey} used Dig...");
+                        if(_diggers.ContainsKey(diggerKey)) {
+                            _diggers[diggerKey] = messageTime;
+                        } else {
+                            _diggers.Add(diggerKey, messageTime);
+                        }
                     }
                 }
             } else if(type == XivChatType.Party || type == XivChatType.Say || type == XivChatType.Alliance || type == XivChatType.Shout || type == XivChatType.Yell || type == XivChatType.TellIncoming) {
-                if(type == XivChatType.Party && mapLink != null && !_plugin.GameStateManager.CurrentPartyList.ContainsKey(playerKey)) {
+                if(type == XivChatType.Party && mapLink != null && playerKey != null && !_plugin.GameStateManager.CurrentPartyList.ContainsKey(playerKey)) {
                     //special case for cross-world party members
                     _plugin.DataQueue.QueueDataOperation(() => {
                         var crossWorldPlayer = _plugin.StorageManager.GetPlayers().Query().Where(p => p.Key == playerKey).FirstOrDefault();
@@ -382,7 +389,7 @@ namespace MapPartyAssist.Services {
             } else if(_boundByMapDutyDelayed) {
                 //gil
                 if((int)type == 62) {
-                    Match m = DutyManager.GilObtainedRegex[_plugin.ClientState.ClientLanguage].Match(message);
+                    Match m = LanguageHelper.GetValue(DutyManager.GilObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message);
                     if(m.Success) {
                         string parsedGilString = m.Value.Replace(",", "").Replace(".", "").Replace(" ", "");
                         int gil = int.Parse(parsedGilString);
@@ -392,8 +399,8 @@ namespace MapPartyAssist.Services {
                     //player loot obtained
                 } else if((int)type == 8254 || (int)type == 4158 || (int)type == 2110) {
                     //check for self match
-                    Match selfQuantityMatch = DutyManager.SelfObtainedQuantityRegex[_plugin.ClientState.ClientLanguage].Match(message);
-                    Match selfItemMatch = DutyManager.SelfObtainedItemRegex[_plugin.ClientState.ClientLanguage].Match(message);
+                    Match selfQuantityMatch = LanguageHelper.GetValue(DutyManager.SelfObtainedQuantityRegex, _plugin.ClientState.ClientLanguage).Match(message);
+                    Match selfItemMatch = LanguageHelper.GetValue(DutyManager.SelfObtainedItemRegex, _plugin.ClientState.ClientLanguage).Match(message);
                     if(selfQuantityMatch.Success) {
                         bool isNumber = Regex.IsMatch(selfQuantityMatch.Value, @"\d+");
                         int quantity = isNumber ? int.Parse(selfQuantityMatch.Value.Replace(",", "").Replace(".", "")) : 1;
@@ -412,18 +419,18 @@ namespace MapPartyAssist.Services {
                                 AddLootResults(lastMap, (uint)rowId, false, quantity, currentPlayer);
                                 isChange = true;
                             } else {
-                                _plugin.Log.Warning($"Cannot find rowId for {selfItemMatch.Value}");
+                                _plugin.Log.Warning($"无法找到 {selfItemMatch.Value} 对应的表项 ID。");
                             }
                         }
                     } else {
-                        Match m = DutyManager.PartyMemberObtainedRegex[_plugin.ClientState.ClientLanguage].Match(message.ToString());
+                        Match m = LanguageHelper.GetValue(DutyManager.PartyMemberObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message.ToString());
                         if(m.Success) {
                             bool isNumber = Regex.IsMatch(m.Value, @"\d+");
                             int quantity = isNumber ? int.Parse(m.Value.Replace(",", "").Replace(".", "")) : 1;
                             if(itemId is not null) {
                                 //chat log settings can make playerKey null
                                 if(playerKey is null) {
-                                    var nominalAlias = DutyManager.PlayerAliasRegex[_plugin.ClientState.ClientLanguage].Match(message);
+                                    var nominalAlias = LanguageHelper.GetValue(DutyManager.PlayerAliasRegex, _plugin.ClientState.ClientLanguage).Match(message);
                                     playerKey = _plugin.GameStateManager.MatchAliasToPlayer(nominalAlias.Value);
                                 }
                                 AddLootResults(lastMap, (uint)itemId, isHQ, quantity, playerKey);
@@ -437,7 +444,7 @@ namespace MapPartyAssist.Services {
 
                     //check for loot list
                 } else if(type == XivChatType.SystemMessage) {
-                    Match m = DutyManager.LootListRegex[_plugin.ClientState.ClientLanguage].Match(message.ToString());
+                    Match m = LanguageHelper.GetValue(DutyManager.LootListRegex, _plugin.ClientState.ClientLanguage).Match(message.ToString());
                     if(m.Success) {
                         bool isNumber = Regex.IsMatch(m.Value, @"\d+");
                         int quantity = isNumber ? int.Parse(m.Value.Replace(",", "").Replace(".", "")) : 1;
@@ -464,7 +471,7 @@ namespace MapPartyAssist.Services {
         }
 
         public void AddMap(MPAMember? player, string? zone = null, string? mapName = null, bool isManual = false, bool isPortal = false, bool isAmbiguous = false) {
-            _plugin.Log.Information(string.Format("Adding new{0} map for {1}", isManual ? " manual" : "", player?.Key));
+            _plugin.Log.Information($"正在记录地图：{player?.Key ?? "未知玩家"}{(isManual ? "（手动）" : string.Empty)}");
             DateTime currentTime = DateTime.Now;
 
             if(_plugin.IsLanguageSupported()) {
@@ -516,7 +523,7 @@ namespace MapPartyAssist.Services {
         }
 
         public void ClearAllMaps() {
-            _plugin.Log.Information("Archiving all maps...");
+            _plugin.Log.Information("正在归档所有地图...");
             var maps = _plugin.StorageManager.GetMaps().Query().Where(m => !m.IsArchived).ToList();
             maps.ForEach(m => m.IsArchived = true);
             _plugin.StorageManager.UpdateMaps(maps, false);
@@ -526,7 +533,7 @@ namespace MapPartyAssist.Services {
         }
 
         public void ArchiveMaps(IEnumerable<MPAMap> maps) {
-            _plugin.Log.Information("Archiving maps...");
+            _plugin.Log.Information("正在归档所选地图...");
             maps.ToList().ForEach(m => m.IsArchived = true);
             _plugin.StorageManager.UpdateMaps(maps, false);
             _plugin.GameStateManager.BuildRecentPartyList();
@@ -534,7 +541,7 @@ namespace MapPartyAssist.Services {
         }
 
         public void DeleteMaps(IEnumerable<MPAMap> maps) {
-            _plugin.Log.Information("Deleting maps...");
+            _plugin.Log.Information("正在删除所选地图...");
             maps.ToList().ForEach(m => m.IsDeleted = true);
             _plugin.StorageManager.UpdateMaps(maps, false);
             _plugin.GameStateManager.BuildRecentPartyList();
@@ -542,9 +549,9 @@ namespace MapPartyAssist.Services {
         }
 
         public void ReassignMap(MPAMap map, MPAMember newOwner) {
-            _plugin.Log.Information($"Changing map owner: {map.Owner} to {newOwner.Key}");
+            _plugin.Log.Information($"正在将地图持有人从 {map.Owner} 更改为 {newOwner.Key}");
             if(map.Owner != null && map.Owner.Equals(newOwner.Key)) {
-                _plugin.Log.Warning($"Attempting to re-assign map to same owner!");
+                _plugin.Log.Warning("尝试将地图重新分配给同一位持有人！");
                 return;
             }
 
@@ -571,7 +578,7 @@ namespace MapPartyAssist.Services {
         }
 
         public void CheckAndArchiveMaps() {
-            _plugin.Log.Information("Checking and archiving old maps...");
+            _plugin.Log.Information("正在检查并归档过期的地图记录...");
             DateTime currentTime = DateTime.Now;
             var storageMaps = _plugin.StorageManager.GetMaps().Query().Where(m => !m.IsArchived).ToList();
             foreach(var map in storageMaps) {
@@ -667,6 +674,9 @@ namespace MapPartyAssist.Services {
             foreach(var digger in _diggers) {
                 bool foundIgnore = false;
                 foreach(var ignorePlayer in ignorePlayers) {
+                    if(string.IsNullOrEmpty(ignorePlayer)) {
+                        continue;
+                    }
                     if(ignorePlayer.Equals(digger.Key)) {
                         foundIgnore = true;
                         break;
@@ -689,12 +699,20 @@ namespace MapPartyAssist.Services {
             return closestKey;
         }
 
-        private bool IsPlayerCandidateOwner(DateTime cofferTime, string playerKey) {
-            if(!_diggers.ContainsKey(playerKey)) {
+
+        private static Regex GetRegex(IReadOnlyDictionary<ClientLanguage, Regex> dictionary, ClientLanguage language) {
+            return LanguageHelper.GetValue(dictionary, language);
+        }
+        private bool IsPlayerCandidateOwner(DateTime cofferTime, string? playerKey) {
+            if(string.IsNullOrEmpty(playerKey)) {
                 return false;
             }
 
-            return (cofferTime - _diggers[playerKey]).TotalMilliseconds < _digThresholdMS;
+            if(!_diggers.TryGetValue(playerKey, out var digTime)) {
+                return false;
+            }
+
+            return (cofferTime - digTime).TotalMilliseconds < _digThresholdMS;
         }
 
         private void SetStatus(string message, StatusLevel level) {
@@ -717,14 +735,14 @@ namespace MapPartyAssist.Services {
             //}
 
             if(map is null) {
-                _plugin.Log.Warning("Unable to add loot results: no map");
+                _plugin.Log.Warning("无法写入战利品记录：没有找到对应的地图。");
                 return;
             } else if(map.LootResults is null) {
                 throw new InvalidOperationException("Unable to add loot result to map!");
                 //10 minute fallback
             } else if((DateTime.Now - map.Time).TotalMinutes > 10) {
                 //throw new InvalidOperationException("");
-                _plugin.Log.Warning("Last map time exceeded loot threshold window.");
+                _plugin.Log.Warning("最近的地图记录已超过战利品统计的时间限制。");
                 return;
             }
 
@@ -744,3 +762,6 @@ namespace MapPartyAssist.Services {
         }
     }
 }
+
+
+

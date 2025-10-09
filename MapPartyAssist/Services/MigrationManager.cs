@@ -1,4 +1,4 @@
-﻿using Dalamud.Game;
+using Dalamud.Game;
 using Dalamud.Utility;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
@@ -105,7 +105,10 @@ namespace MapPartyAssist.Services {
             var results = _plugin.StorageManager.GetDutyResults().Query().Where(m => !m.IsComplete).ToList();
             foreach(var result in results) {
                 try {
-                    var duty = _plugin.DutyManager.Duties[result.DutyId];
+                    var dutyManager = _plugin.DutyManager;
+                    if(dutyManager == null || !dutyManager.Duties.TryGetValue(result.DutyId, out var duty) || duty.Checkpoints == null) {
+                        continue;
+                    }
                     if(duty.Checkpoints.Count == result.CheckpointResults.Count && result.CheckpointResults.Last().IsReached) {
                         result.IsComplete = true;
                         result.CompletionTime = result.Time;

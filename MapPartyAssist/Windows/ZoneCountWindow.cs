@@ -1,6 +1,7 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace MapPartyAssist.Windows {
 
         internal Dictionary<string, int> Zones { get; set; } = new();
 
-        internal ZoneCountWindow(Plugin plugin, MainWindow mainWindow) : base("Map Links by Zone") {
+        internal ZoneCountWindow(Plugin plugin, MainWindow mainWindow) : base(Loc.Tr("Map Links by Zone")) {
             ShowCloseButton = false;
             Flags = Flags | ImGuiWindowFlags.AlwaysAutoResize;
             PositionCondition = ImGuiCond.Always;
@@ -56,8 +57,8 @@ namespace MapPartyAssist.Windows {
 
         public override void Draw() {
             if(ImGui.BeginTable($"##ZoneTable", 2, ImGuiTableFlags.NoHostExtendX)) {
-                ImGui.TableSetupColumn("name", ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 158f);
-                ImGui.TableSetupColumn("count", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 15);
+                ImGui.TableSetupColumn(Loc.Tr("name"), ImGuiTableColumnFlags.WidthStretch, ImGuiHelpers.GlobalScale * 158f);
+                ImGui.TableSetupColumn(Loc.Tr("count"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 15);
                 foreach(var zone in Zones.OrderBy(kvp => kvp.Key)) {
                     ImGui.TableNextRow();
                     ImGui.TableNextColumn();

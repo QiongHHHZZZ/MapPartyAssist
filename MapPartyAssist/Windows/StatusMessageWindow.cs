@@ -1,7 +1,8 @@
-﻿using Dalamud.Interface.Colors;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System.Numerics;
 
 namespace MapPartyAssist.Windows {
@@ -10,7 +11,7 @@ namespace MapPartyAssist.Windows {
         private Plugin _plugin;
         private MainWindow _mainWindow;
 
-        internal StatusMessageWindow(Plugin plugin, MainWindow mainWindow) : base("Status") {
+        internal StatusMessageWindow(Plugin plugin, MainWindow mainWindow) : base(Loc.Tr("Status")) {
             ShowCloseButton = false;
             CollapsedCondition = ImGuiCond.None;
             Flags = Flags | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar;

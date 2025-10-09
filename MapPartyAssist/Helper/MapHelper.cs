@@ -1,4 +1,5 @@
-﻿using MapPartyAssist.Types;
+using MapPartyAssist.Localization;
+using MapPartyAssist.Types;
 using System.Collections.Generic;
 
 namespace MapPartyAssist.Helper {
@@ -34,47 +35,47 @@ namespace MapPartyAssist.Helper {
 
         public static string GetMapName(TreasureMap map) {
             return map switch {
-                TreasureMap.Leather => "Leather Treasure Map",
-                TreasureMap.Goatskin => "Goatskin Treasure Map",
-                TreasureMap.Toadskin => "Toadskin Treasure Map",
-                TreasureMap.Boarskin => "Boarskin Treasure Map",
-                TreasureMap.Peisteskin => "Peisteskin Treasure Map",
-                TreasureMap.Alexandrite => "Alexandrite Treasure Map",
-                TreasureMap.Unhidden => "Leather Buried Treasure Map",
-                TreasureMap.Archaeoskin => "Archaeoskin Treasure Map",
-                TreasureMap.Wyvernskin => "Wyvernskin Treasure Map",
-                TreasureMap.Dragonskin => "Dragonskin Treasure Map",
-                TreasureMap.Gaganaskin => "Gaganaskin Treasure Map",
-                TreasureMap.Gazelleskin => "Gazelleskin Treasure Map",
-                TreasureMap.Thief => "Fabled Thief's Map",
-                TreasureMap.SeeminglySpecial => "Seemingly Special Treasure Map",
-                TreasureMap.Gliderskin => "Gliderskin Treasure Map",
-                TreasureMap.Zonureskin => "Zonureskin Treasure Map",
-                TreasureMap.OstensiblySpecial => "Ostensibly Special Treasure Map",
-                TreasureMap.Saigaskin => "Saigaskin Treasure Map",
-                TreasureMap.Kumbhiraskin => "Kumbhiraskin Treasure Map",
-                TreasureMap.Ophiotauroskin => "Ophiotauroskin Treasure Map",
-                TreasureMap.PotentiallySpecial => "Potentially Special Treasure Map",
-                TreasureMap.ConceivablySpecial => "Conceivably Special Treasure Map",
-                TreasureMap.Loboskin => "Loboskin Treasure Map",
-                TreasureMap.Braaxskin => "Br'aaxskin Treasure Map",
-                TreasureMap.Gargantuaskin => "Gargantuaskin Treasure Map",
-                _ => "Unknown"
+                TreasureMap.Leather => Loc.Tr("Leather Treasure Map"),
+                TreasureMap.Goatskin => Loc.Tr("Goatskin Treasure Map"),
+                TreasureMap.Toadskin => Loc.Tr("Toadskin Treasure Map"),
+                TreasureMap.Boarskin => Loc.Tr("Boarskin Treasure Map"),
+                TreasureMap.Peisteskin => Loc.Tr("Peisteskin Treasure Map"),
+                TreasureMap.Alexandrite => Loc.Tr("Alexandrite Treasure Map"),
+                TreasureMap.Unhidden => Loc.Tr("Leather Buried Treasure Map"),
+                TreasureMap.Archaeoskin => Loc.Tr("Archaeoskin Treasure Map"),
+                TreasureMap.Wyvernskin => Loc.Tr("Wyvernskin Treasure Map"),
+                TreasureMap.Dragonskin => Loc.Tr("Dragonskin Treasure Map"),
+                TreasureMap.Gaganaskin => Loc.Tr("Gaganaskin Treasure Map"),
+                TreasureMap.Gazelleskin => Loc.Tr("Gazelleskin Treasure Map"),
+                TreasureMap.Thief => Loc.Tr("Fabled Thief's Map"),
+                TreasureMap.SeeminglySpecial => Loc.Tr("Seemingly Special Treasure Map"),
+                TreasureMap.Gliderskin => Loc.Tr("Gliderskin Treasure Map"),
+                TreasureMap.Zonureskin => Loc.Tr("Zonureskin Treasure Map"),
+                TreasureMap.OstensiblySpecial => Loc.Tr("Ostensibly Special Treasure Map"),
+                TreasureMap.Saigaskin => Loc.Tr("Saigaskin Treasure Map"),
+                TreasureMap.Kumbhiraskin => Loc.Tr("Kumbhiraskin Treasure Map"),
+                TreasureMap.Ophiotauroskin => Loc.Tr("Ophiotauroskin Treasure Map"),
+                TreasureMap.PotentiallySpecial => Loc.Tr("Potentially Special Treasure Map"),
+                TreasureMap.ConceivablySpecial => Loc.Tr("Conceivably Special Treasure Map"),
+                TreasureMap.Loboskin => Loc.Tr("Loboskin Treasure Map"),
+                TreasureMap.Braaxskin => Loc.Tr("Br'aaxskin Treasure Map"),
+                TreasureMap.Gargantuaskin => Loc.Tr("Gargantuaskin Treasure Map"),
+                _ => Loc.Tr("Unknown")
             };
         }
 
         public static string GetCategoryName(TreasureMapCategory category) {
             return category switch {
-                TreasureMapCategory.ARealmReborn => "A Realm Reborn",
-                TreasureMapCategory.Heavensward => "Heavensward",
-                TreasureMapCategory.Stormblood => "Stormblood",
-                TreasureMapCategory.Shadowbringers => "Shadowbringers",
-                TreasureMapCategory.Endwalker => "Endwalker",
-                TreasureMapCategory.Elpis => "Elpis",
-                TreasureMapCategory.Dawntrail => "Dawntrail",
-                TreasureMapCategory.LivingMemory => "Living Memory",
-                TreasureMapCategory.Unknown => "Unknown/Unrecorded",
-                _ => "Unknown/Unrecorded",
+                TreasureMapCategory.ARealmReborn => Loc.Tr("A Realm Reborn"),
+                TreasureMapCategory.Heavensward => Loc.Tr("Heavensward"),
+                TreasureMapCategory.Stormblood => Loc.Tr("Stormblood"),
+                TreasureMapCategory.Shadowbringers => Loc.Tr("Shadowbringers"),
+                TreasureMapCategory.Endwalker => Loc.Tr("Endwalker"),
+                TreasureMapCategory.Elpis => Loc.Tr("Elpis"),
+                TreasureMapCategory.Dawntrail => Loc.Tr("Dawntrail"),
+                TreasureMapCategory.LivingMemory => Loc.Tr("Living Memory"),
+                TreasureMapCategory.Unknown => Loc.Tr("Unknown/Unrecorded"),
+                _ => Loc.Tr("Unknown/Unrecorded"),
             };
         }
 

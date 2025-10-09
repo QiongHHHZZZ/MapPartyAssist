@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
@@ -24,8 +24,10 @@ namespace MapPartyAssist.Services {
 
         internal Task<T> QueueDataOperation<T>(Func<T> action) {
 #if DEBUG
-            var x = new StackFrame(1, true).GetMethod();
-            _plugin.Log.Verbose($"adding data operation from: {x.Name} {x.DeclaringType} tasks queued: {DataTaskQueue.Count + 1}");
+            var caller = new StackFrame(1, true).GetMethod();
+            var callerName = caller?.Name ?? "<未知>";
+            var callerType = caller?.DeclaringType?.ToString() ?? "<未知类型>";
+            _plugin.Log?.Verbose($"添加数据任务：来源 {callerName} {callerType}，队列长度：{DataTaskQueue.Count + 1}");
 #endif
             Task<T> t = new(action);
             AddToTaskQueue(t);
@@ -34,8 +36,10 @@ namespace MapPartyAssist.Services {
 
         internal Task QueueDataOperation(Action action) {
 #if DEBUG
-            var x = new StackFrame(1, true).GetMethod();
-            _plugin.Log.Verbose($"adding data operation from: {x.Name} {x.DeclaringType} tasks queued: {DataTaskQueue.Count + 1}");
+            var caller = new StackFrame(1, true).GetMethod();
+            var callerName = caller?.Name ?? "<未知>";
+            var callerType = caller?.DeclaringType?.ToString() ?? "<未知类型>";
+            _plugin.Log?.Verbose($"添加数据任务：来源 {callerName} {callerType}，队列长度：{DataTaskQueue.Count + 1}");
 #endif
             Task t = new(action);
             AddToTaskQueue(t);
@@ -61,11 +65,11 @@ namespace MapPartyAssist.Services {
                             await nestedTask!.Result;
                         }
                     } else {
-                        throw new InvalidOperationException("Unable to dequeue task!");
+                        throw new InvalidOperationException("无法从队列中获取任务！");
                     }
                 } catch(Exception e) {
-                    _plugin.Log.Error(e, $"Exception in data task.");
-                    //_plugin.Log.Error(e.StackTrace ?? "");
+                    _plugin.Log?.Error(e, "执行数据任务时发生异常。");
+                    //_plugin.Log?.Error(e.StackTrace ?? "");
                 } finally {
                     DataLock.Release();
                 }
@@ -73,3 +77,5 @@ namespace MapPartyAssist.Services {
         }
     }
 }
+
+

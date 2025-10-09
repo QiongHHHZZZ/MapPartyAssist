@@ -1,10 +1,11 @@
-﻿using Dalamud.Interface;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 using Dalamud.Bindings.ImGui;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using MapPartyAssist.Windows.Filter;
 using MapPartyAssist.Windows.Summary;
@@ -30,7 +31,7 @@ namespace MapPartyAssist.Windows {
 
         internal SemaphoreSlim RefreshLock { get; init; } = new SemaphoreSlim(1, 1);
 
-        internal StatsWindow(Plugin plugin) : base("Treasure Hunt Statistics") {
+        internal StatsWindow(Plugin plugin) : base(Loc.Tr("Treasure Hunt Statistics")) {
             SizeConstraints = new WindowSizeConstraints {
                 MinimumSize = new Vector2(300, 400),
                 MaximumSize = new Vector2(1500, 1080)
@@ -102,7 +103,7 @@ namespace MapPartyAssist.Windows {
                             var ownerFilter = (OwnerFilter)filter;
                             string trimmedOwner = ownerFilter.Owner.Trim();
                             if(!trimmedOwner.IsNullOrEmpty()) {
-                                dutyResults = dutyResults.Where(dr => dr.Owner.Contains(trimmedOwner, StringComparison.OrdinalIgnoreCase)).ToList();
+                                dutyResults = dutyResults.Where(dr => dr.Owner != null && dr.Owner.Contains(trimmedOwner, StringComparison.OrdinalIgnoreCase)).ToList();
                                 maps = maps.Where(m => m.Owner is not null && m.Owner.Contains(trimmedOwner, StringComparison.OrdinalIgnoreCase)).ToList();
                                 imports = new();
                             }
@@ -311,21 +312,21 @@ namespace MapPartyAssist.Windows {
 
             if(ImGui.BeginMenuBar()) {
                 try {
-                    if(ImGui.BeginMenu("Windows")) {
+                    if(ImGui.BeginMenu(Loc.Tr("Windows"))) {
                         try {
-                            if(ImGui.MenuItem("Map Tracker", ImU8String.Empty, _plugin.MainWindow.IsOpen)) {
+                            if(ImGui.MenuItem(Loc.Tr("Map Tracker"), ImU8String.Empty, _plugin.MainWindow.IsOpen)) {
                                 OpenMapWindow();
                             }
                         } finally {
                             ImGui.EndMenu();
                         }
                     }
-                    if(ImGui.BeginMenu("Options")) {
+                    if(ImGui.BeginMenu(Loc.Tr("Options"))) {
                         try {
-                            if(ImGui.MenuItem("Manage Imports")) {
+                            if(ImGui.MenuItem(Loc.Tr("Manage Imports"))) {
                                 OpenImportsWindow();
                             }
-                            if(ImGui.MenuItem("Settings")) {
+                            if(ImGui.MenuItem(Loc.Tr("Settings"))) {
                                 OpenConfigWindow();
                             }
                         } finally {
@@ -374,32 +375,32 @@ namespace MapPartyAssist.Windows {
             } finally {
                 ImGui.PopFont();
             }
-            ImGuiHelper.WrappedTooltip($"{(_collapseFilters ? "Show filters" : "Hide filters")}");
+            ImGuiHelper.WrappedTooltip(_collapseFilters ? Loc.Tr("Show filters") : Loc.Tr("Hide filters"));
 
             using(var tabBar = ImRaii.TabBar("TabBar", ImGuiTabBarFlags.None)) {
                 if(tabBar) {
-                    using(var tab1 = ImRaii.TabItem("Duty Progress Summary")) {
+                    using(var tab1 = ImRaii.TabItem(Loc.Tr("Duty Progress Summary"))) {
                         if(tab1) {
                             using(var child = ImRaii.Child("DungeonSummaryChild")) {
                                 _dutySummary.Draw();
                             }
                         }
                     }
-                    using(var tab2 = ImRaii.TabItem("Loot")) {
+                    using(var tab2 = ImRaii.TabItem(Loc.Tr("Loot"))) {
                         if(tab2) {
                             using(var child = ImRaii.Child("LootResultsChild")) {
                                 _lootSummary.Draw();
                             }
                         }
                     }
-                    using(var tab3 = ImRaii.TabItem("Maps")) {
+                    using(var tab3 = ImRaii.TabItem(Loc.Tr("Maps"))) {
                         if(tab3) {
                             using(var child = ImRaii.Child("Maps")) {
                                 _mapList.Draw();
                             }
                         }
                     }
-                    using(var tab4 = ImRaii.TabItem("Duties")) {
+                    using(var tab4 = ImRaii.TabItem(Loc.Tr("Duties"))) {
                         if(tab4) {
                             using(var child = ImRaii.Child("DutyResultsChild")) {
                                 _dutyResultsList.Draw();

@@ -1,17 +1,16 @@
-﻿using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System;
 using System.Collections.Generic;
 
 namespace MapPartyAssist.Windows.Filter {
     public class MapFilter : DataFilter {
-        public override string Name => "Map Type";
-        public override string HelpMessage => "It isn't possible to tell with certainty what kind of map has been used by a party member, " +
-            "\nso maps are grouped by the expansion of the zone in which they were recorded.\n\n" +
-            "For maps recorded prior to v2.0.0.0, this information may be unavailable.";
+        public override string Name => Loc.Tr("Map Type");
+        public override string HelpMessage => Loc.Tr("It isn't possible to tell with certainty what kind of map has been used by a party member, \nso maps are grouped by the expansion of the zone in which they were recorded.\n\nFor maps recorded prior to v2.0.0.0, this information may be unavailable.");
         internal bool AllSelected { get; set; }
         public Dictionary<TreasureMapCategory, bool> FilterState { get; set; } = new();
 
@@ -48,7 +47,7 @@ namespace MapPartyAssist.Windows.Filter {
 
         internal override void Draw() {
             bool allSelected = AllSelected;
-            if(ImGui.Checkbox($"Select All##{GetHashCode()}", ref allSelected)) {
+            if(ImGui.Checkbox(Loc.Tr("Select All") + $"##{GetHashCode()}", ref allSelected)) {
                 _plugin!.DataQueue.QueueDataOperation(() => {
                     foreach(var category in FilterState) {
                         FilterState[category.Key] = allSelected;

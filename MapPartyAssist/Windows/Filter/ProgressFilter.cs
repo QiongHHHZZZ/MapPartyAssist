@@ -1,9 +1,10 @@
-﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImGui;
+using MapPartyAssist.Localization;
 using System;
 
 namespace MapPartyAssist.Windows.Filter {
     public class ProgressFilter : DataFilter {
-        public override string Name => "Progress";
+        public override string Name => Loc.Tr("Progress");
 
         public bool OnlyClears { get; set; }
 
@@ -17,7 +18,7 @@ namespace MapPartyAssist.Windows.Filter {
 
         internal override void Draw() {
             bool onlyClears = OnlyClears;
-            if(ImGui.Checkbox("Full clears only", ref onlyClears)) {
+            if(ImGui.Checkbox(Loc.Tr("Full clears only"), ref onlyClears)) {
                 _plugin!.DataQueue.QueueDataOperation(() => {
                     OnlyClears = onlyClears;
                     Refresh();
@@ -26,3 +27,4 @@ namespace MapPartyAssist.Windows.Filter {
         }
     }
 }
+

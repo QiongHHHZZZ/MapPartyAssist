@@ -1,5 +1,6 @@
-﻿using Dalamud.Game;
+using Dalamud.Game;
 using LiteDB;
+using MapPartyAssist.Localization;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -88,7 +89,7 @@ namespace MapPartyAssist.Types {
             string displayName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Name);
             //re-lowercase 'of'
             displayName = Regex.Replace(displayName, @"(?<!^)\bof\b", "of", RegexOptions.IgnoreCase);
-            return displayName;
+            return Loc.Tr(displayName);
         }
     }
 

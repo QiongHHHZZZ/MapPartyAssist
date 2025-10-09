@@ -1,4 +1,4 @@
-﻿using Dalamud.Interface;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 using Dalamud.Bindings.ImGui;
 using MapPartyAssist.Helper;
+using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
 using System;
 using System.Numerics;
@@ -17,14 +18,14 @@ namespace MapPartyAssist.Windows {
         private ViewDutyResultsImportsWindow _viewWindow;
         private DutyResultsImport _model = new();
 
-        private string _statusMessage = "";
+        private string _statusMessage = string.Empty;
         private int _selectedDuty = 0;
         private readonly int[] _dutyIdCombo = { 0, 179, 268, 276, 586, 688, 745, 819, 909, 993, 1060 };
         private readonly string[] _dutyNameCombo;
 
         private const float _inputWidth = 200f;
 
-        internal AddDutyResultsImportWindow(Plugin plugin, ViewDutyResultsImportsWindow viewWindow) : base("Import Statistics") {
+        internal AddDutyResultsImportWindow(Plugin plugin, ViewDutyResultsImportsWindow viewWindow) : base(Loc.Tr("Import Statistics")) {
             SizeConstraints = new WindowSizeConstraints {
                 MinimumSize = new Vector2(300, 150),
                 MaximumSize = new Vector2(500, 800)
@@ -54,10 +55,10 @@ namespace MapPartyAssist.Windows {
                 if(child) {
                     using var table = ImRaii.Table($"AddTable", 3, ImGuiTableFlags.NoHostExtendX | ImGuiTableFlags.NoClip);
                     if(table) {
-                        ImGui.TableSetupColumn("enabled", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 40);
-                        ImGui.TableSetupColumn("field", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 200);
-                        //ImGui.TableSetupColumn("field", ImGuiTableColumnFlags.WidthStretch);
-                        ImGui.TableSetupColumn("name", ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn(Loc.Tr("enabled"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 40);
+                        ImGui.TableSetupColumn(Loc.Tr("field"), ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 200);
+                        //ImGui.TableSetupColumn(Loc.Tr("field"), ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn(Loc.Tr("name"), ImGuiTableColumnFlags.WidthStretch);
                         ImGui.TableNextRow();
                         ImGui.TableNextColumn();
 
@@ -66,7 +67,7 @@ namespace MapPartyAssist.Windows {
                         //ImGui.TableNextColumn();
                         //ImGui.TableNextColumn();
 
-                        if(ImGui.Button("Now")) {
+                        if(ImGui.Button(Loc.Tr("Now"))) {
                             _model.Time = DateTime.Now;
                         }
 
@@ -80,13 +81,13 @@ namespace MapPartyAssist.Windows {
                             }
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Time");
+                        ImGui.Text(Loc.Tr("Time"));
                         ImGui.SameLine();
-                        ImGuiHelper.HelpMarker("When to insert data. Auto-formats date\nusing your local timezone.");
+                        ImGuiHelper.HelpMarker(Loc.Tr("When to insert data. Auto-formats date\\nusing your local timezone."));
 
                         //ImGui.TableNextColumn();
                         //ImGui.TableNextColumn();
-                        //if(ImGui.Button("Now")) {
+                        //if(ImGui.Button(Loc.Tr("Now"))) {
                         //    _model.Time = DateTime.Now;
                         //}
                         //ImGui.TableNextColumn();
@@ -100,7 +101,7 @@ namespace MapPartyAssist.Windows {
                             _model.SummonTotals = null;
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Duty");
+                        ImGui.Text(Loc.Tr("Duty"));
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
 
@@ -113,7 +114,7 @@ namespace MapPartyAssist.Windows {
                             }
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Total Runs");
+                        ImGui.Text(Loc.Tr("Total Runs"));
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
 
@@ -126,7 +127,7 @@ namespace MapPartyAssist.Windows {
                             }
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Total Clears");
+                        ImGui.Text(Loc.Tr("Total Clears"));
                         ImGui.TableNextColumn();
 
                         bool hasGil = _model.TotalGil != null;
@@ -138,7 +139,7 @@ namespace MapPartyAssist.Windows {
                             }
                         }
                         ImGui.TableNextColumn();
-                        var gil = _model.TotalGil.ToString();
+                        var gil = _model.TotalGil?.ToString() ?? string.Empty;
                         ImGui.SetNextItemWidth(_inputWidth);
                         if(ImGui.InputText($"##GilInput", ref gil, 10, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.CharsDecimal)) {
                             uint gilInt;
@@ -148,9 +149,9 @@ namespace MapPartyAssist.Windows {
                             }
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Total Gil");
+                        ImGui.Text(Loc.Tr("Total Gil"));
                         ImGui.SameLine();
-                        ImGuiHelper.HelpMarker("Check box if gil was tracked.");
+                        ImGuiHelper.HelpMarker(Loc.Tr("Check box if gil was tracked."));
                         ImGui.TableNextColumn();
 
                         bool hasFloors = _model.CheckpointTotals != null;
@@ -165,9 +166,9 @@ namespace MapPartyAssist.Windows {
                         }
                         ImGui.TableNextColumn();
                         ImGui.TableNextColumn();
-                        ImGui.Text("Checkpoint Totals");
+                        ImGui.Text(Loc.Tr("Checkpoint Totals"));
                         ImGui.SameLine();
-                        ImGuiHelper.HelpMarker("Total number of times each checkpoint was reached.\nCheck box if this was tracked, but select a duty first!");
+                        ImGuiHelper.HelpMarker(Loc.Tr("Total number of times each checkpoint was reached.\nCheck box if this was tracked, but select a duty first!"));
                         ImGui.TableNextColumn();
 
                         if(hasFloors) {
@@ -200,14 +201,14 @@ namespace MapPartyAssist.Windows {
                         }
                         ImGui.TableNextColumn();
                         if(hasSequence) {
-                            if(ImGui.Button("Add New Clear")) {
+                            if(ImGui.Button(Loc.Tr("Add New Clear"))) {
                                 _model.ClearSequence!.Add(0);
                             }
                         }
                         ImGui.TableNextColumn();
-                        ImGui.Text("Clear Sequence");
+                        ImGui.Text(Loc.Tr("Clear Sequence"));
                         ImGui.SameLine();
-                        ImGuiHelper.HelpMarker("Runs between each clear.\nCheck box if this was tracked.");
+                        ImGuiHelper.HelpMarker(Loc.Tr("Runs between each clear.\nCheck box if this was tracked."));
                         ImGui.TableNextColumn();
                         if(hasSequence) {
                             for(int i = 0; i < _model.ClearSequence!.Count; i++) {
@@ -236,13 +237,13 @@ namespace MapPartyAssist.Windows {
                                     }
                                 }
                                 ImGui.TableNextColumn();
-                                ImGui.Text($"{StringHelper.AddOrdinal(i + 1)} clear");
+                                ImGui.Text(Loc.TrFormat("{0} clear", StringHelper.AddOrdinal(i + 1)));
                                 ImGui.TableNextColumn();
                             }
 
                             if(_model.ClearSequence.Count > 0) {
                                 ImGui.TableNextColumn();
-                                var runsSinceLastClearString = _model.RunsSinceLastClear.ToString();
+                                var runsSinceLastClearString = _model.RunsSinceLastClear?.ToString() ?? string.Empty;
                                 ImGui.SetNextItemWidth(_inputWidth);
                                 if(ImGui.InputText($"##RunsSinceLastClear", ref runsSinceLastClearString, 9, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.CharsDecimal)) {
                                     uint runsSinceLastClearInt;
@@ -251,7 +252,7 @@ namespace MapPartyAssist.Windows {
                                     }
                                 }
                                 ImGui.TableNextColumn();
-                                ImGui.Text("Runs since last clear");
+                                ImGui.Text(Loc.Tr("Runs since last clear"));
                                 ImGui.TableNextColumn();
                             }
                         }
@@ -268,9 +269,9 @@ namespace MapPartyAssist.Windows {
                             }
                             ImGui.TableNextColumn();
                             ImGui.TableNextColumn();
-                            ImGui.Text("Total Summons");
+                            ImGui.Text(Loc.Tr("Total Summons"));
                             ImGui.SameLine();
-                            ImGuiHelper.HelpMarker("Total summons of each type.\nCheck box if this was tracked.");
+                            ImGuiHelper.HelpMarker(Loc.Tr("Total summons of each type.\nCheck box if this was tracked."));
                             ImGui.TableNextColumn();
 
                             if(hasSummons) {
@@ -285,31 +286,31 @@ namespace MapPartyAssist.Windows {
                                         }
                                     }
                                     ImGui.TableNextColumn();
-                                    string label = "";
+                                    string label = string.Empty;
                                     switch(summon.Key) {
                                         case Summon.Lesser:
-                                            label = "Lesser summons";
+                                            label = Loc.Tr("Lesser summons");
                                             break;
                                         case Summon.Greater:
-                                            label = "Greater summons";
+                                            label = Loc.Tr("Greater summons");
                                             break;
                                         case Summon.Elder:
-                                            label = "Elder summons";
+                                            label = Loc.Tr("Elder summons");
                                             break;
                                         case Summon.Gold:
-                                            label = "Circle shifts";
+                                            label = Loc.Tr("Circle shifts");
                                             if(_plugin.DutyManager.Duties[_model.DutyId].Structure == DutyStructure.Slots) {
-                                                label = "Final summons";
+                                                label = Loc.Tr("Final summons");
                                             }
                                             break;
                                         case Summon.Silver:
-                                            label = "Abominations";
+                                            label = Loc.Tr("Abominations");
                                             if(_plugin.DutyManager.Duties[_model.DutyId].Structure == DutyStructure.Slots) {
-                                                label = "Fever dreams";
+                                                label = Loc.Tr("Fever dreams");
                                             }
                                             break;
                                         default:
-                                            label = "";
+                                            label = string.Empty;
                                             break;
                                     }
                                     ImGui.Text($"{label}");
@@ -321,31 +322,31 @@ namespace MapPartyAssist.Windows {
                 }
             }
 
-            if(ImGui.Button("Save")) {
+            if(ImGui.Button(Loc.Tr("Save"))) {
                 _plugin.DataQueue.QueueDataOperation(() => {
                     if(_plugin.ImportManager.ValidateImport(_model)) {
                         //save
                         _plugin.Log.Information("Valid Import");
                         _plugin.ImportManager.AddorEditImport(_model, false);
-                        _statusMessage = "";
+                        _statusMessage = string.Empty;
                         IsOpen = false;
                         //_plugin.Save();
                     } else {
                         _plugin.Log.Information("Invalid Import");
-                        _statusMessage = "Invalid data, check numbers.";
+                        _statusMessage = Loc.Tr("Invalid data, check numbers.");
                     }
                 });
             }
 
             ImGui.SameLine();
-            if(ImGui.Button("Cancel")) {
+            if(ImGui.Button(Loc.Tr("Cancel"))) {
                 ClearModel();
                 IsOpen = false;
             }
 
             if(!_statusMessage.IsNullOrEmpty()) {
                 ImGui.SameLine();
-                ImGui.TextColored(ImGuiColors.DalamudRed, $"{_statusMessage}");
+                ImGui.TextColored(ImGuiColors.DalamudRed, _statusMessage);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using Lumina.Excel.Sheets;
+using Lumina.Excel.Sheets;
 using MapPartyAssist.Types;
 using MapPartyAssist.Types.REST.Universalis;
 using Newtonsoft.Json;
@@ -69,7 +69,7 @@ namespace MapPartyAssist.Services {
 
         internal void DisablePolling() {
             if(IsEnabled) {
-                _plugin.Log.Information("Disabling price updates.");
+                _plugin.Log.Information("停止更新物价信息。");
                 _cancelUpdate?.Cancel();
                 _cancelUpdate?.Dispose();
             }
@@ -77,7 +77,7 @@ namespace MapPartyAssist.Services {
 
         internal void EnablePolling() {
             if(!IsEnabled && IsInitialized) {
-                _plugin.Log.Information("Enabling price updates.");
+                _plugin.Log.Information("开始更新物价信息。");
                 //CheckAndUpdate();
                 _ = StartUpdateCheck();
             }
@@ -93,7 +93,7 @@ namespace MapPartyAssist.Services {
         }
 
         private void RebuildCache() {
-            _plugin.Log.Information("Rebuilding price cache.");
+            _plugin.Log.Information("重新构建物价缓存。");
             _priceCache = new();
             _priceCacheUpdateTime = new();
             _blacklist = new();
@@ -117,7 +117,7 @@ namespace MapPartyAssist.Services {
                         _priceCacheUpdateTime.Add(itemKey, price.LastChecked);
                     }
                 } catch(ArgumentException) {
-                    _plugin.Log.Error("Price cache corruption detected...purging table.");
+                    _plugin.Log.Error("检测到物价缓存损坏，正在清空数据。");
                     _plugin.StorageManager.GetPrices().DeleteAll();
                     return;
                 }
@@ -125,7 +125,7 @@ namespace MapPartyAssist.Services {
         }
 
         private void SaveCache() {
-            _plugin.Log.Debug("Saving price cache...");
+            _plugin.Log.Debug("正在保存物价缓存...");
             var storagePrices = _plugin.StorageManager.GetPrices().Query().Where(p => p.Region == _plugin.GameStateManager.GetCurrentRegion()).ToList();
             List<PriceCheck> newPrices = new();
             foreach(var cachePrice in _priceCache) {
@@ -246,7 +246,7 @@ namespace MapPartyAssist.Services {
                             } else {
                                 _failMultiplier = 1;
                             }
-                            //todo check for invalid items
+                            // Ensure invalid items are filtered before processing
                             _toCheck = _toCheck.Skip(_concurrentItemsMax).ToList();
                         } catch(ArgumentException e) {
                             //invalid region or not logged in...
@@ -380,7 +380,7 @@ namespace MapPartyAssist.Services {
                 _lastQuery = DateTime.Now;
 
                 if(!response.IsSuccessStatusCode) {
-                    _plugin.Log.Error($"Failed to query Universalis API. {(int)response.StatusCode} {response.StatusCode}\n{response.ReasonPhrase}");
+                    _plugin.Log.Error($"查询 Universalis API 失败：{(int)response.StatusCode} {response.StatusCode}\\n{response.ReasonPhrase}");
                     _failCount++;
                     //single invalid items will generate 404 errors
                     if(response.StatusCode == HttpStatusCode.NotFound && itemIds.Length == 1) {
@@ -407,8 +407,8 @@ namespace MapPartyAssist.Services {
                     try {
                         result = JsonConvert.DeserializeObject<HistoryResponse>(jsonResponse, new HistoryResponseConverter(itemIds.Length == 1));
                     } catch(Exception e) {
-                        _plugin.Log.Error("Deserialization failed!");
-                        _plugin.Log.Error($"{e.Message} {e.Source}");
+                        _plugin.Log.Error("响应解析失败！");
+                        _plugin.Log.Error($"详细信息：{e.Message} {e.Source}");
                     }
                     return result;
                 }
@@ -468,7 +468,40 @@ namespace MapPartyAssist.Services {
         }
 
         public override void WriteJson(JsonWriter writer, HistoryResponse value, JsonSerializer serializer) {
-            throw new NotImplementedException();
+            if(SingleExpected) {
+                if(value.Items != null && value.Items.Count > 0) {
+                    foreach(var item in value.Items.Values) {
+                        serializer.Serialize(writer, item);
+                        return;
+                    }
+                }
+                writer.WriteNull();
+                return;
+            }
+
+            writer.WriteStartObject();
+
+            if(value.Items != null) {
+                foreach(var entry in value.Items) {
+                    writer.WritePropertyName(entry.Key.ToString());
+                    serializer.Serialize(writer, entry.Value);
+                }
+            }
+
+            if(value.UnresolvedItems != null && value.UnresolvedItems.Count > 0) {
+                writer.WritePropertyName("unresolvedItems");
+                serializer.Serialize(writer, value.UnresolvedItems);
+            }
+
+            if(value.ItemIDs != null && value.ItemIDs.Count > 0) {
+                writer.WritePropertyName("itemIDs");
+                serializer.Serialize(writer, value.ItemIDs);
+            }
+
+            writer.WriteEndObject();
         }
     }
 }
+
+
+

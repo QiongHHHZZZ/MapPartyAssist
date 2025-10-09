@@ -1,8 +1,8 @@
 {
-  "Author": "SaMo",
+  "Author": "SaMo, 穷孩子(适配/汉化)",
   "Name": "Map Party Assist",
-  "Punchline": "Treasure map tracker and statistics.",
-  "Description": "Tool for keeping track of treasure maps opened by party members and recording map and dungeon statistics.",
+  "Punchline": "藏宝图追踪与统计助手。",
+  "Description": "用于记录队员开启的藏宝图，并统计地图与地宫相关数据的工具。",
   "InternalName": "MapPartyAssist",
   "RepoUrl": "https://github.com/wrath16/MapPartyAssist",
   "ApplicableVersion": "any",
