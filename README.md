@@ -1,51 +1,53 @@
-# Map Party Assist
+# Map Party Assist 地图派对助手
 
-Tool for recording treasure map statistics and co-ordinating map parties.
+用于记录藏宝图统计数据并协调宝图队伍的工具。
 
 [![image](https://i.imgur.com/JeyAe7l.png) [![image](https://i.imgur.com/OMK8LPU.png)
 
 [![Download count](https://img.shields.io/endpoint?url=https://qzysathwfhebdai6xgauhz4q7m0mzmrf.lambda-url.us-east-1.on.aws/MapPartyAssist)](https://github.com/wrath16/MapPartyAssist)
 
+## 安装
 
-## Installation
+1. 可在 Dalamud 主仓库中获取。
 
-1. Available in the main Dalamud repository.
+## 使用说明
 
-## Usage instructions 
+### 地图追踪：
 
-### Map tracking:
+* 在聊天中输入 `/mparty` 打开追踪窗口。
+* 当队员通过触碰宝箱或进入传送门来使用地图时，系统会自动为对应玩家打勾记录。
+* 可通过右键点击每位队员的名字或勾选框来手动添加或移除地图。
+* 若有人在队聊中链接集合点，其名字旁会出现放大镜图标，可悬停或点击以带着该集合点打开你自己的地图。
+* 最近一次使用地图的队员会以黄色高亮显示。
+* 地图会在 24 小时后自动归档，你仍可在此之前查看最近队员的地图；若一天内进行多场队伍，可手动清空记录。
+* 在 `/mpartyconfig` 或 Dalamud 插件安装器中的“Settings”按钮可以打开配置菜单，提供地图与统计追踪相关的多种自定义选项。
 
-* Enter `/mparty` into chat to open the tracker window.
-* When a player uses a map by touching a treasure chest or entering a portal, it will be automatically recorded with a checkmark.
-* Maps can be manually added and removed by right-clicking on each party member's name or checkmarks.
-* If someone links a waymark in party chat, it will be noted with a magnifying glass next to their name that you can hover over or click on to open your map with the waymark.
-* The most recent party member to use a map will be highlighted in yellow.
-* Maps auto-archive after 24 hours, and you can see recent party members' maps until then. You can also clear the slate manually if you're running multiple parties a day.
-* A number of customization options for both map and stats tracking are available in the configuration menu opened with `/mpartyconfig` or by pressing the 'Settings' button in the Dalamud plugin installer.
+### 宝物地城统计：
 
-### Treasure dungeon stats:
+* 输入 `/mpartystats` 打开统计窗口。
+* “Current” 过滤器只会统计当前主窗口所记录地图触发的副本。
 
-* Enter `/mpartystats` to open the stats window.
-* The "Current" filter only includes duties resulting from maps currently recorded on the main window.
+### 注意事项：
 
-### Important notes:
-* Only works with the international client languages (EN/JP/FR/DE).
-* The plugin primarily works by parsing system chat messages. Sometimes it isn't always possible to know exactly who owns a map and the tracker can make mistakes (known cases are listed below), so stay vigilant and correct mistakes as necessary.
-* Use `/mpartyedit` to toggle editing of maps and duties on the stats window for error correction.
-* Use imports to add stats that were recorded when the plugin is unavailable!
+* 仅支持国际客户端语言（EN/JP/FR/DE）。
+* 插件主要依赖系统聊天信息进行解析，部分情况下无法准确判断地图持有者（已知情形列于下方），请留意并在必要时手动纠正。
+* 使用 `/mpartyedit` 可在统计窗口中开启地图与副本记录的编辑模式，以便修正错误。
+* 可通过导入功能补充插件不可用期间记录的统计数据。
 
-## Known issues:
+## 已知问题
 
-#### Map tracker issues:
-* If you are too far away from a party member who successfully uses Dig, the tracker will not know who owns the treasure coffer and will require manual verification.
-* If you are too far away from the party member who successfully uses Dig but are within range of another party member who unsucessfully uses Dig, the tracker will assume the latter player is the map owner and will require correction.
-* If two or more party members use Dig around the same time and are within range, the tracker will assume the first player to use Dig is the owner of the coffer that spawns, but this is not always the case and should be verified.
-* Discarding an opened map generates the same message as using it, and will be added as if it were used.
-* If a party member goes offline just as you are entering a portal, this will cancel the portal and can lead to double-counting for Thief's Maps only.
-* A party member consuming a Thief's Map immediately after finishing another party member's regular map without entering a portal may result in it not being counted.
-* Waiting too long to enter a (non-Thief's Map, non-self-owned) portal can result in double counting, as can restarting the game or Dalamud.
+#### 地图追踪相关：
 
-#### Loot tracker issues:
-* Gil earned from challenge logs will be counted.
-* Items dropped from non-treasure hunt monsters who are nearby will be counted.
-* If chat log display name settings is not set to "Full Name", it will not work.
+* 如果你与成功使用 Dig 的队员距离过远，追踪器无法判断宝箱拥有者，需要手动确认。
+* 如果你与成功使用 Dig 的队员距离过远，但能接收到另一位队员失败使用 Dig 的信息，追踪器会认为后者是地图持有人，需要手动修正。
+* 如果两名及以上队员几乎同时在可视范围内使用 Dig，追踪器会假定第一位使用 Dig 的玩家拥有出现的宝箱，但实际情况可能不同，需自行核对。
+* 丢弃已开启的地图会生成与使用地图相同的系统信息，也会被记作已使用。
+* 当某位队员在你进入传送门时离线，会取消传送门，并可能在盗贼地图（Thief's Map）的情况下造成重复计数。
+* 若队员在刚结束他人常规地图且未进入传送门时立刻使用盗贼地图，可能不会被计入。
+* 等待过久才进入非盗贼地图、且非自身地图的传送门，或在此期间重启游戏 / Dalamud，都可能导致重复计数。
+
+#### 掉落追踪相关：
+
+* 来自挑战日志的金币会被计入。
+* 附近非藏宝图怪物掉落的物品也会被统计。
+* 若聊天栏的显示名称设置不是“Full Name”，插件将无法正常工作。

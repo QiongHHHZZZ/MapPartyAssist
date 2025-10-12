@@ -286,9 +286,6 @@ namespace MapPartyAssist {
                     HelpMessage = Loc.Tr("Toggle editing of maps/duty results.")
                 });
 
-                ImGuiLocalizationHelper.Initialize(InteropProvider, Log);
-
-
                 PluginInterface.UiBuilder.Draw += DrawUI;
                 PluginInterface.UiBuilder.OpenMainUi += DrawMainUI;
                 PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
@@ -346,8 +343,6 @@ namespace MapPartyAssist {
 #if DEBUG
             Log.Debug("插件正在卸载");
 #endif
-
-            ImGuiLocalizationHelper.Dispose();
 
             WindowSystem.RemoveAllWindows();
             CommandManager.RemoveHandler(CommandName);
