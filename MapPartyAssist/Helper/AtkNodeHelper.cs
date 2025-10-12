@@ -199,36 +199,38 @@ namespace MapPartyAssist.Helper {
             //int index = 0;
             //var stringArray = AtkStage.GetSingleton()->GetStringArrayData()[index];
 
-            int count = 0;
-            var stringArray = AtkStage.Instance()->GetStringArrayData()[0];
-            while(stringArray != null) {
-
-                int internalCount = 0;
-                var internalArray = stringArray->StringArray[0];
-                while(internalArray != null) {
-                    ////internalArray = stringArray[internalCount];
-                    //int secondInternalCount = 0;
-                    //var secondInternalArray = internalArray[0];
-
-                    //while(secondInternalArray != null) {
-                    //    Log.Debug(ReadString(secondInternalArray));
-                    //    //Log.Debug(Marshal.PtrToStringUTF8((nint)secondInternalArray));
-                    //    secondInternalCount++;
-                    //    secondInternalArray = internalArray[secondInternalCount];
-                    //}
-
-                    Log.Debug($"{count} {internalCount}\t{ReadString(internalArray)}");
-
-                    internalCount++;
-                    internalArray = stringArray->StringArray[internalCount];
-                }
-                Log.Debug($"{count} Total strings: {internalCount}");
-
-                count++;
-                stringArray = AtkStage.Instance()->GetStringArrayData()[count];
+            var stage = AtkStage.Instance();
+            if(stage == null) {
+                return;
             }
 
-            Log.Debug($"Total AtkStageStringArrays: {count}");
+            var dataHolder = stage->AtkArrayDataHolder;
+            if(dataHolder == null) {
+                return;
+            }
+
+            for(int arrayIndex = 0; arrayIndex < dataHolder->StringArrayCount; arrayIndex++) {
+                var stringArray = dataHolder->StringArrays[arrayIndex];
+                if(stringArray == null) {
+                    continue;
+                }
+
+                int stringsFound = 0;
+                for(int internalCount = 0; internalCount < stringArray->Size; internalCount++) {
+                    var entry = stringArray->StringArray[internalCount];
+                    byte* entryPtr = entry;
+                    if(entryPtr == null) {
+                        continue;
+                    }
+
+                    Log.Debug($"{arrayIndex} {internalCount}\t{ReadString(entryPtr)}");
+                    stringsFound++;
+                }
+
+                Log.Debug($"{arrayIndex} Total strings: {stringsFound}");
+            }
+
+            Log.Debug($"Total AtkStageStringArrays: {dataHolder->StringArrayCount}");
 
             //for(int i = 0; i < string)
 

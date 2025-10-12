@@ -47,7 +47,10 @@ namespace MapPartyAssist.Services {
         private void OnFrameworkUpdate(IFramework framework) {
             var playerJob = _plugin.ClientState.LocalPlayer?.ClassJob.Value.Abbreviation;
             var currentPartySize = _plugin.PartyList.Length;
-            CurrentRegion = PlayerHelper.GetRegion(_plugin.ClientState.LocalPlayer?.CurrentWorld.Value.DataCenter.Value.Region);
+            var dataCenter = _plugin.ClientState.LocalPlayer?.CurrentWorld.Value.DataCenter.Value;
+            string? dataCenterName = dataCenter.HasValue ? dataCenter.Value.Name.ToString() : null;
+            byte? regionByte = dataCenter?.Region;
+            CurrentRegion = PlayerHelper.GetRegion(regionByte, dataCenterName);
             string? currentPlayerName = _plugin.ClientState.LocalPlayer?.Name?.ToString();
             string? currentPlayerWorld = _plugin.ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString();
             if(currentPlayerName != null && currentPlayerWorld != null) {

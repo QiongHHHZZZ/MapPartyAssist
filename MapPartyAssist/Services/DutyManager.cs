@@ -181,21 +181,24 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.English, new Regex(@"(?<=You obtain )[\d,\.]+(?= gil)", RegexOptions.IgnoreCase) },
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez )[\d,\.\W]+(?= gils)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast )[\d,\.\W]+(?= Gil erhalten)", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@"[\d,\.\W]+(?=ギルを手に入れた)", RegexOptions.IgnoreCase) }
+            { ClientLanguage.Japanese, new Regex(@"[\d,\.\W]+(?=ギルを手に入れた)", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?<=获得了)[\d,\.]+(?=金币)", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> LootListRegex = new() {
             { ClientLanguage.English, new Regex(@"(the|an|a|[\.,\d]+)\b(?=.* been added to the loot list)", RegexOptions.IgnoreCase) },
             { ClientLanguage.French, new Regex(@"(le|la|l'|un|une|[\.,\d]+)\b(?=.* a été ajoutée au butin)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Ihr habt Beutegut \(.?)(ein|eine|einen|der|die|den|dem|des|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@"([\.,\d]*)(?=戦利品に追加されました)", RegexOptions.IgnoreCase) }
+            { ClientLanguage.Japanese, new Regex(@"([\.,\d]*)(?=戦利品に追加されました)", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?:(?<=×)\s*(?<qty>[\d,\.]+)|(?<=[""”])\s*(?<qty>[\d,\.]*))", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> SelfObtainedQuantityRegex = new() {
             { ClientLanguage.English, new Regex(@"(?<=You obtain .?)(the|an|a|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez .?)(le|la|l'|un|une|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast .?)(ein|eine|einen|der|die|den|dem|des|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@"[\.,\d]*(?=(個|を)手に入れた。)", RegexOptions.IgnoreCase) }
+            { ClientLanguage.Japanese, new Regex(@"[\.,\d]*(?=(個|を)手に入れた。)", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?:(?<=×)\s*(?<qty>[\d,\.]+)|(?<=获得了)\s*(?<qty>[\d,\.]*))", RegexOptions.IgnoreCase) }
         };
 
         //EN note: does not work with items beginning with no indefinite
@@ -205,14 +208,16 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.English, new Regex(@"(?<=You obtain .?(an|a|[\.,\d])+\s)[\w\s]*", RegexOptions.IgnoreCase) },
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez .?(un|une|[\.,\d])+\s)[\w\s]*", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast .?(ein|eine|einen|[\.,\d]+)\s)[\w\s]*(?= erhalten)", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@".*(?=を[\d]*個手に入れた。)", RegexOptions.IgnoreCase) }
+            { ClientLanguage.Japanese, new Regex(@".*(?=を[\d]*個手に入れた。)", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"获得了\s*(?:[\d,\.]+\s*)?(?:\(\+\d+%?\))?\s*(?:枚|个|张|只|束|把|台|桶|册|朵|支|块|条|件|份|颗|棵|箱|袋|壶|杯|盏|瓶|套|卷|片|根)?\s*(?<item>[^。×]*)", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> PartyMemberObtainedRegex = new() {
             { ClientLanguage.English, new Regex(@"(?<=obtains .?)(the|an|a|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.French, new Regex(@"(?<=obtient .?)(le|la|l'|un|une|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=hat .?)(ein|eine|einen|der|die|den|dem|des|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@"[\.,\d]*(?=を手に入れた。)", RegexOptions.IgnoreCase) }
+            { ClientLanguage.Japanese, new Regex(@"[\.,\d]*(?=を手に入れた。)", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?:(?<=×)\s*(?<qty>[\d,\.]+)|(?<=获得了)\s*(?<qty>[\d,\.]*))", RegexOptions.IgnoreCase) }
         };
 
         //for retrieving playername when no payload
@@ -288,7 +293,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"n'est plus.*apparaît\!$", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Als .* fällt.*erscheint!$", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"が消滅したことで、.*が現れた！$", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"出现了！$", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"出现(?:了)?！$", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 9360, 9366
@@ -315,7 +320,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Ramassez \d* sacs brillants en \d* secondes", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Sammle \d* schimmernde Säcke in \d* Sekunden!", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^\d*秒以内に「輝く袋」を\d*個拾え", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"90秒之内捡拾100个“发光的袋子”！", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^\d+秒内拾取\d+个“?发光的袋子”?！", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 11265, 11274
@@ -324,7 +329,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(La fantasmagorie a pris fin|Vous avez ramassé \d* sac(s)? brilliant(s)? et un coffre en)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(Der Fiebertraum ist ausgeträumt|Du hast \d* schimmernde(n)? (Sack|Säcke) erhalten und eine)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"(「スペシャルドリーム」が終了した|「輝く袋」を\d*個取得し)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(“奇梦抚心”结束了|获得了 \d* 个“发光的袋子”，出现了)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(“奇梦抚心”结束了|获得了 ?\d+ 个“?发光的袋子”?，出现了)", RegexOptions.IgnoreCase) }
         };
 
         ////LogMessage: 11269
@@ -685,8 +690,9 @@ namespace MapPartyAssist.Services {
                 Match selfQuantityMatch = LanguageHelper.GetValue(SelfObtainedQuantityRegex, _plugin.ClientState.ClientLanguage).Match(message.Text);
                 Match selfItemMatch = LanguageHelper.GetValue(SelfObtainedItemRegex, _plugin.ClientState.ClientLanguage).Match(message.Text);
                 if(selfQuantityMatch.Success) {
-                    bool isNumber = Regex.IsMatch(selfQuantityMatch.Value, @"\d+");
-                    int quantity = isNumber ? int.Parse(selfQuantityMatch.Value.Replace(",", "").Replace(".", "")) : 1;
+                    string selfQuantityText = RegexHelper.EnsureQuantityText(RegexHelper.GetGroupValue(selfQuantityMatch, "qty"), message.Text);
+                    bool isNumber = Regex.IsMatch(selfQuantityText, @"\d+");
+                    int quantity = isNumber ? int.Parse(selfQuantityText.Replace(",", "").Replace(".", "")) : 1;
                     var currentPlayer = _plugin.GameStateManager.GetCurrentPlayer();
                     if(message.ItemId is uint itemId) {
                         var isHq = message.IsHq ?? false;
@@ -696,21 +702,26 @@ namespace MapPartyAssist.Services {
                         _plugin.Log.Debug(string.Format("itemId: {0, -40} isHQ: {1, -6} quantity: {2, -5} recipient: {3}", itemId, isHq, quantity, currentPlayer));
 #endif
                     } else if(selfItemMatch.Success) {
+                        var itemName = RegexHelper.SanitizeQuotedText(RegexHelper.GetGroupValue(selfItemMatch, "item"));
+                        if(string.IsNullOrEmpty(itemName)) {
+                            itemName = RegexHelper.SanitizeQuotedText(selfItemMatch.Value);
+                        }
                         //tomestones
                         //Japanese has no plural...
-                        var rowId = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese ? _plugin.GetRowId<Item>(selfItemMatch.Value, "Plural", GrammarCase.Accusative) : _plugin.GetRowId<Item>(selfItemMatch.Value, "Singular", GrammarCase.Accusative);
+                        var rowId = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese ? _plugin.GetRowId<Item>(itemName, "Plural", GrammarCase.Accusative) : _plugin.GetRowId<Item>(itemName, "Singular", GrammarCase.Accusative);
                         if(rowId is not null) {
                             AddLootResults(results, (uint)rowId, false, quantity, currentPlayer);
                             isChange = true;
                         } else {
-                            _plugin.Log.Warning($"Cannot find rowId for {selfItemMatch.Value}");
+                            _plugin.Log.Warning($"Cannot find rowId for {itemName}");
                         }
                     }
                 } else {
                     Match m = LanguageHelper.GetValue(PartyMemberObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message.Text);
                     if(m.Success) {
-                        bool isNumber = Regex.IsMatch(m.Value, @"\d+");
-                        int quantity = isNumber ? int.Parse(m.Value.Replace(",", "").Replace(".", "")) : 1;
+                        string partyQuantityText = RegexHelper.EnsureQuantityText(RegexHelper.GetGroupValue(m, "qty"), message.Text);
+                        bool isNumber = Regex.IsMatch(partyQuantityText, @"\d+");
+                        int quantity = isNumber ? int.Parse(partyQuantityText.Replace(",", "").Replace(".", "")) : 1;
                         if(message.ItemId is uint itemId) {
                             //chat log settings can make playerKey null
                             if(message.PlayerKey is null) {
@@ -731,8 +742,9 @@ namespace MapPartyAssist.Services {
                 Match m = LanguageHelper.GetValue(LootListRegex, _plugin.ClientState.ClientLanguage).Match(message.Text);
                 if(m.Success) {
                     // Extend this branch to support all languages...
-                    bool isNumber = Regex.IsMatch(m.Value, @"\d+");
-                    int quantity = isNumber ? int.Parse(m.Value.Replace(",", "").Replace(".", "")) : 1;
+                    string lootQuantityText = RegexHelper.EnsureQuantityText(RegexHelper.GetGroupValue(m, "qty"), message.Text);
+                    bool isNumber = Regex.IsMatch(lootQuantityText, @"\d+");
+                    int quantity = isNumber ? int.Parse(lootQuantityText.Replace(",", "").Replace(".", "")) : 1;
                     if(message.ItemId is uint itemId) {
                         var isHq = message.IsHq ?? false;
                         AddLootResults(results, itemId, isHq, quantity);
@@ -1080,7 +1092,7 @@ namespace MapPartyAssist.Services {
                     patterns[ClientLanguage.German] += "";
                     patterns[ClientLanguage.Japanese] += "(?=が現れた)";
                     if(hasChinese) {
-                        patterns[chineseLanguage] += "(?=出现了)";
+                        patterns[chineseLanguage] += "(?=出现(?:了)?[!！])";
                     }
                     break;
                 case Summon.Gold:
@@ -1089,7 +1101,7 @@ namespace MapPartyAssist.Services {
                     patterns[ClientLanguage.German] = "(?<=Eine glückliche Fügung wird euch zuteil und (ein |eine |einen )?)" + patterns[ClientLanguage.German] + "(?= erscheint)";
                     patterns[ClientLanguage.Japanese] = "(?<=召喚式変動が発動し、)" + patterns[ClientLanguage.Japanese] + "(?=が現れた)";
                     if(hasChinese) {
-                        patterns[chineseLanguage] = "(?<=发动了召唤式变动，)" + patterns[chineseLanguage] + "(?=出现了)";
+                        patterns[chineseLanguage] = "(?<=发动了召唤式变动，)" + patterns[chineseLanguage] + "(?=出现(?:了)?[!！])";
                     }
                     break;
             }

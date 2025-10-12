@@ -268,8 +268,14 @@ namespace MapPartyAssist.Services {
 
         private async Task UpdatePrices(uint[] itemIds) {
             try {
-                _plugin.Log.Debug($"{_plugin.GameStateManager.GetCurrentRegion()}");
-                HistoryResponse? results = await QueryUniversalisHistory(itemIds, _plugin.GameStateManager.GetCurrentRegion());
+                var region = _plugin.GameStateManager.GetCurrentRegion();
+                if(region == Region.Unknown) {
+                    _plugin.Log.Debug("无法识别当前大区，跳过物价查询。");
+                    return;
+                }
+
+                _plugin.Log.Debug($"{region}");
+                HistoryResponse? results = await QueryUniversalisHistory(itemIds, region);
                 if(results is not null) {
                     foreach(var item in results.Value.Items) {
                         string itemName = "";
@@ -348,35 +354,24 @@ namespace MapPartyAssist.Services {
             }
 
             HttpClient client = new HttpClient();
-            string endpoint = "https://universalis.app/api/v2/history/";
-            string searchParams = "";
+            const string endpoint = "https://universalis.app/api/v2/history/";
 
             try {
-                switch(region) {
-                    case Region.Japan:
-                        endpoint += "Japan/";
-                        break;
-                    case Region.NorthAmerica:
-                        endpoint += "North-America/";
-                        break;
-                    case Region.Europe:
-                        endpoint += "Europe/";
-                        break;
-                    case Region.Oceania:
-                        endpoint += "Oceania/";
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid region.");
-                }
+                string regionSegment = region switch {
+                    Region.Japan => "Japan",
+                    Region.NorthAmerica => "North-America",
+                    Region.Europe => "Europe",
+                    Region.Oceania => "Oceania",
+                    Region.China => "China",
+                    Region.Korea => "Korea",
+                    _ => throw new ArgumentException("Invalid region."),
+                };
 
-                foreach(var id in itemIds) {
-                    searchParams += id + ",";
-                }
-                searchParams += $"?entriesToReturn={_entriesToQuery}&entriesWithin={_maxSaleWindowDays * 24 * 60 * 60}";
+                string idSegment = string.Join(",", itemIds);
+                string query = $"{regionSegment}/{idSegment}?entriesToReturn={_entriesToQuery}&entriesWithin={_maxSaleWindowDays * 24 * 60 * 60}";
 
-                client.BaseAddress = new Uri(endpoint);
-                _plugin.Log.Debug($"Query: {endpoint}{searchParams}");
-                HttpResponseMessage response = await client.GetAsync(searchParams);
+                _plugin.Log.Debug($"Query: {endpoint}{query}");
+                HttpResponseMessage response = await client.GetAsync(endpoint + query);
                 _lastQuery = DateTime.Now;
 
                 if(!response.IsSuccessStatusCode) {

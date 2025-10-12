@@ -48,6 +48,7 @@ namespace MapPartyAssist.Windows.Summary {
                 selfPlayers.Add(p.Key);
             });
 
+            var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
             foreach(var m in maps) {
                 if(m.IsPortal) {
                     _portalCount++;
@@ -58,34 +59,14 @@ namespace MapPartyAssist.Windows.Summary {
                 Dictionary<LootResultKey, LootResultValue> newLootResults = new();
                 int newTotalGil = 0;
                 foreach(var lootResult in m.LootResults.Where(x => x.Recipient != null)) {
-                    var key = new LootResultKey { ItemId = lootResult.ItemId, IsHQ = lootResult.IsHQ };
                     bool selfObtained = lootResult.Recipient is not null && selfPlayers.Contains(lootResult.Recipient);
-                    var price = _plugin.PriceHistory.CheckPrice(key);
-                    int obtainedQuantity = selfObtained ? lootResult.Quantity : 0;
-                    if(newLootResults.ContainsKey(key)) {
-                        newLootResults[key].ObtainedQuantity += obtainedQuantity;
-                        newLootResults[key].DroppedQuantity += lootResult.Quantity;
-                    } else {
-                        var row = _plugin.DataManager.GetExcelSheet<Item>()?.GetRow(lootResult.ItemId);
-                        if(row is not null) {
-                            newLootResults.Add(key, new LootResultValue {
-                                DroppedQuantity = lootResult.Quantity,
-                                ObtainedQuantity = obtainedQuantity,
-                                Rarity = row.Value.Rarity,
-                                ItemName = row.Value.Name.ToString(),
-                                Category = row.Value.ItemUICategory.Value.Name.ToString(),
-                                AveragePrice = price,
-                                DroppedValue = price * lootResult.Quantity,
-                                ObtainedValue = price * obtainedQuantity,
-                            });
-                        }
-                    }
-                    //multiply gil by total partymembers
-                    if(lootResult.ItemId == 1) {
-                        newTotalGil += m.Players?.Length * lootResult.Quantity ?? lootResult.Quantity;
-                    } else {
-                        newTotalGil += price * lootResult.Quantity ?? 0;
-                    }
+                    newTotalGil += LootAggregationHelper.Accumulate(
+                        newLootResults,
+                        lootResult,
+                        selfObtained,
+                        m.Players?.Length ?? 1,
+                        itemId => itemSheet?.GetRow(itemId),
+                        key => _plugin.PriceHistory.CheckPrice(key));
                 }
                 newLootResults = newLootResults.OrderByDescending(lr => lr.Value.DroppedQuantity).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
                 lootResults.Add(m.Id, newLootResults);

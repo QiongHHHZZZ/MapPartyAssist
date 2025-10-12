@@ -64,32 +64,16 @@ namespace MapPartyAssist.Windows.Summary {
                 selfPlayers.Add(p.Key);
             });
 
+            var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
             var addLootResult = (LootResult lootResult, int playerCount) => {
-                var key = new LootResultKey { ItemId = lootResult.ItemId, IsHQ = lootResult.IsHQ };
                 bool selfObtained = lootResult.Recipient is not null && selfPlayers.Contains(lootResult.Recipient);
-                var price = _plugin.PriceHistory.CheckPrice(key);
-                int obtainedQuantity = selfObtained ? lootResult.Quantity : 0;
-                int droppedQuantity = lootResult.ItemId == 1 ? lootResult.Quantity * playerCount : lootResult.Quantity;
-                if(newLootResults.ContainsKey(key)) {
-                    newLootResults[key].ObtainedQuantity += obtainedQuantity;
-                    newLootResults[key].DroppedQuantity += droppedQuantity;
-                    newLootResults[key].DroppedValue += droppedQuantity * price;
-                    newLootResults[key].ObtainedValue += obtainedQuantity * price;
-                } else {
-                    var row = _plugin.DataManager.GetExcelSheet<Item>()?.GetRow(lootResult.ItemId);
-                    if(row is not null) {
-                        newLootResults.Add(key, new LootResultValue {
-                            DroppedQuantity = droppedQuantity,
-                            ObtainedQuantity = obtainedQuantity,
-                            Rarity = row.Value.Rarity,
-                            Category = row.Value.ItemUICategory.Value.Name.ToString(),
-                            ItemName = row.Value.Name.ToString(),
-                            AveragePrice = price,
-                            DroppedValue = price * droppedQuantity,
-                            ObtainedValue = price * obtainedQuantity,
-                        });
-                    }
-                }
+                LootAggregationHelper.Accumulate(
+                    newLootResults,
+                    lootResult,
+                    selfObtained,
+                    playerCount,
+                    itemId => itemSheet?.GetRow(itemId),
+                    key => _plugin.PriceHistory.CheckPrice(key));
             };
 
             foreach(var dutyResult in dutyResults) {

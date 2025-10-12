@@ -286,6 +286,8 @@ namespace MapPartyAssist {
                     HelpMessage = Loc.Tr("Toggle editing of maps/duty results.")
                 });
 
+                ImGuiLocalizationHelper.Initialize(InteropProvider, Log);
+
 
                 PluginInterface.UiBuilder.Draw += DrawUI;
                 PluginInterface.UiBuilder.OpenMainUi += DrawMainUI;
@@ -344,6 +346,8 @@ namespace MapPartyAssist {
 #if DEBUG
             Log.Debug("插件正在卸载");
 #endif
+
+            ImGuiLocalizationHelper.Dispose();
 
             WindowSystem.RemoveAllWindows();
             CommandManager.RemoveHandler(CommandName);
@@ -409,7 +413,7 @@ namespace MapPartyAssist {
             switch((int)type) {
                 case 2091:  //self actions
                 case 4139:  //party member actions
-                    if(Regex.IsMatch(message.ToString(), @"(Dig|Excavation|Ausgraben|ディグ)", RegexOptions.IgnoreCase)) {
+                    if(Regex.IsMatch(message.ToString(), @"(Dig|Excavation|Ausgraben|ディグ|挖掘)", RegexOptions.IgnoreCase)) {
                         goto case 2105;
                     }
                     goto default;
