@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 using Dalamud.Bindings.ImGui;
+using LiteDB;
 using MapPartyAssist.Helper;
 using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
@@ -66,6 +67,7 @@ namespace MapPartyAssist.Windows {
                 var dutyResults = _plugin.StorageManager.GetDutyResults().Query().Include(dr => dr.Map).OrderBy(dr => dr.Time).ToList();
                 var maps = _plugin.StorageManager.GetMaps().Query().OrderBy(m => m.Time).ToList();
                 var imports = _plugin.StorageManager.GetDutyResultsImports().Query().Where(i => !i.IsDeleted).OrderBy(i => i.Time).ToList();
+                bool selfLootOnlyFilterEnabled = false;
 
                 //DateTime dt2 = DateTime.Now;
                 //_plugin.Log.Debug($"from db: {(dt2 - dt).TotalMilliseconds}ms");
@@ -257,6 +259,8 @@ namespace MapPartyAssist.Windows {
                             break;
                         case Type _ when filter.GetType() == typeof(MiscFilter):
                             var miscFilter = (MiscFilter)filter;
+                            var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
+                            selfLootOnlyFilterEnabled = miscFilter.SelfLootOnly && !currentPlayerKey.IsNullOrEmpty();
                             if(!miscFilter.ShowDeleted) {
                                 maps = maps.Where(m => !m.IsDeleted).ToList();
                                 dutyResults = dutyResults.Where(dr => dr.IsComplete).ToList();
@@ -264,6 +268,63 @@ namespace MapPartyAssist.Windows {
                             if(miscFilter.LootOnly) {
                                 maps = maps.Where(m => m.LootResults != null && m.LootResults.Count > 0).ToList();
                                 dutyResults = dutyResults.Where(dr => dr.HasLootResults()).ToList();
+                            }
+                            if(miscFilter.SelfLootOnly && !currentPlayerKey.IsNullOrEmpty()) {
+                                bool MatchesSelfRecipient(string? recipient) {
+                                    if(recipient.IsNullOrEmpty()) {
+                                        return false;
+                                    }
+                                    if(recipient.Equals(currentPlayerKey, StringComparison.OrdinalIgnoreCase)) {
+                                        return true;
+                                    }
+                                    return PlayerHelper.IsAliasMatch(currentPlayerKey!, recipient);
+                                }
+
+                                bool MapHasSelfLoot(MPAMap map) {
+                                    if(map.LootResults == null) {
+                                        return false;
+                                    }
+                                    foreach(var loot in map.LootResults) {
+                                        if(MatchesSelfRecipient(loot.Recipient)) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                }
+
+                                bool DutyHasSelfLoot(DutyResults result) {
+                                    foreach(var loot in result.FirstLootResults) {
+                                        if(MatchesSelfRecipient(loot.Recipient)) {
+                                            return true;
+                                        }
+                                    }
+                                    foreach(var checkpoint in result.CheckpointResults) {
+                                        if(checkpoint.LootResults == null) {
+                                            continue;
+                                        }
+                                        foreach(var loot in checkpoint.LootResults) {
+                                            if(MatchesSelfRecipient(loot.Recipient)) {
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                    return false;
+                                }
+
+                                HashSet<ObjectId> mapsWithSelfLoot = new();
+                                List<DutyResults> filteredDutyResults = new();
+                                foreach(var result in dutyResults) {
+                                    if(DutyHasSelfLoot(result)) {
+                                        filteredDutyResults.Add(result);
+                                        if(result.Map != null) {
+                                            mapsWithSelfLoot.Add(result.Map.Id);
+                                        }
+                                    }
+                                }
+
+                                dutyResults = filteredDutyResults;
+                                maps = maps.Where(map => MapHasSelfLoot(map) || mapsWithSelfLoot.Contains(map.Id)).ToList();
+                                imports = new();
                             }
                             _plugin.Configuration.StatsWindowFilters.MiscFilter = miscFilter;
                             break;
@@ -274,7 +335,7 @@ namespace MapPartyAssist.Windows {
                 //DateTime dt3 = DateTime.Now;
                 //_plugin.Log.Debug($"filters: {(dt3 - dt2).TotalMilliseconds}ms");
 
-                _lootSummary.Refresh(dutyResults, maps);
+                _lootSummary.Refresh(dutyResults, maps, selfLootOnlyFilterEnabled);
 
                 //DateTime dt4 = DateTime.Now;
                 //_plugin.Log.Debug($"loot summary refresh: {(dt4 - dt3).TotalMilliseconds}ms");

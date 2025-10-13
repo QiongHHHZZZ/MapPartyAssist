@@ -160,6 +160,7 @@ namespace MapPartyAssist.Localization {
             ["Method:"] = "记录方式：",
             ["Multiple map owner candidates found, verify last map ownership."] = "发现多个地图持有人候选，请确认最新地图的持有人。",
             ["Must have loot"] = "仅显示有战利品",
+            ["Only show self-obtained loot"] = "仅显示自己获得的物品",
             ["Name"] = "名称",
             ["New Import"] = "新增导入",
             ["Next 100"] = "下一页 100 条",

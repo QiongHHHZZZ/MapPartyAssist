@@ -51,7 +51,7 @@ namespace MapPartyAssist.Windows.Summary {
             _statsWindow = statsWindow;
         }
 
-        public void Refresh(List<DutyResults> dutyResults, List<MPAMap> maps) {
+        public void Refresh(List<DutyResults> dutyResults, List<MPAMap> maps, bool selfLootOnly) {
             Dictionary<LootResultKey, LootResultValue> newLootResults = new();
             int newLootEligibleRuns = 0;
             int newLootEligibleMaps = 0;
@@ -59,15 +59,22 @@ namespace MapPartyAssist.Windows.Summary {
             int newTotalGilValueDropped = 0;
             string newLootCSV = string.Join(",", new[] { Loc.Tr("Category"), Loc.Tr("Quality"), Loc.Tr("Name"), Loc.Tr("Dropped"), Loc.Tr("Obtained"), Loc.Tr("Unit Price") }) + "\n";
 
-            var selfPlayers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
-            if(!string.IsNullOrEmpty(currentPlayerKey)) {
-                selfPlayers.Add(currentPlayerKey);
+            bool MatchesSelf(string? recipient) {
+                if(string.IsNullOrEmpty(currentPlayerKey) || string.IsNullOrWhiteSpace(recipient)) {
+                    return false;
+                }
+
+                if(recipient.Equals(currentPlayerKey, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+
+                return PlayerHelper.IsAliasMatch(currentPlayerKey!, recipient);
             }
 
             var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
             var addLootResult = (LootResult lootResult, int playerCount) => {
-                bool selfObtained = lootResult.Recipient is not null && selfPlayers.Contains(lootResult.Recipient);
+                bool selfObtained = MatchesSelf(lootResult.Recipient);
                 LootAggregationHelper.Accumulate(
                     newLootResults,
                     lootResult,
@@ -98,6 +105,12 @@ namespace MapPartyAssist.Windows.Summary {
                 foreach(var lootResult in map.LootResults) {
                     addLootResult(lootResult, map.Players?.Length ?? 1);
                 }
+            }
+
+            if(selfLootOnly) {
+                newLootResults = newLootResults
+                    .Where(kvp => kvp.Value.ObtainedQuantity > 0)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
 
             //=set CSV and check for changes

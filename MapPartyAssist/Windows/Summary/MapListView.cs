@@ -40,10 +40,13 @@ namespace MapPartyAssist.Windows.Summary {
         }
 
         public void Refresh(List<MPAMap> maps) {
-            Dictionary<ObjectId, Dictionary<LootResultKey, LootResultValue>> lootResults = new();
-            Dictionary<ObjectId, int> totalGilValue = new();
+            bool selfLootOnly = _plugin.Configuration.StatsWindowFilters.MiscFilter?.SelfLootOnly ?? false;
+
+            var lootResults = new Dictionary<ObjectId, Dictionary<LootResultKey, LootResultValue>>();
+            var totalGilValue = new Dictionary<ObjectId, int>();
+            var filteredMaps = new List<MPAMap>();
             _portalCount = 0;
-            //calculate loot results (this is largely duplicated from lootsummary)
+
             var selfPlayers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
             if(!string.IsNullOrEmpty(currentPlayerKey)) {
@@ -51,37 +54,70 @@ namespace MapPartyAssist.Windows.Summary {
             }
 
             var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
-            foreach(var m in maps) {
-                if(m.IsPortal) {
+            foreach(var map in maps) {
+                if(map.IsPortal) {
                     _portalCount++;
                 }
-                if(m.LootResults == null) {
-                    continue;
+
+                Dictionary<LootResultKey, LootResultValue> collectedLoot = new();
+                int aggregatedGil = 0;
+
+                if(map.LootResults != null) {
+                    foreach(var loot in map.LootResults.Where(x => x.Recipient != null)) {
+                        bool isSelf = false;
+                        if(loot.Recipient is not null) {
+                            if(selfPlayers.Contains(loot.Recipient)) {
+                                isSelf = true;
+                            } else if(!string.IsNullOrEmpty(currentPlayerKey) && PlayerHelper.IsAliasMatch(currentPlayerKey, loot.Recipient)) {
+                                isSelf = true;
+                            }
+                        }
+
+                        aggregatedGil += LootAggregationHelper.Accumulate(
+                            collectedLoot,
+                            loot,
+                            isSelf,
+                            map.Players?.Length ?? 1,
+                            itemId => itemSheet?.GetRow(itemId),
+                            key => _plugin.PriceHistory.CheckPrice(key));
+                    }
                 }
-                Dictionary<LootResultKey, LootResultValue> newLootResults = new();
-                int newTotalGil = 0;
-                foreach(var lootResult in m.LootResults.Where(x => x.Recipient != null)) {
-                    bool selfObtained = lootResult.Recipient is not null && selfPlayers.Contains(lootResult.Recipient);
-                    newTotalGil += LootAggregationHelper.Accumulate(
-                        newLootResults,
-                        lootResult,
-                        selfObtained,
-                        m.Players?.Length ?? 1,
-                        itemId => itemSheet?.GetRow(itemId),
-                        key => _plugin.PriceHistory.CheckPrice(key));
+
+                var orderedLoot = collectedLoot
+                    .OrderByDescending(kvp => kvp.Value.DroppedQuantity)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                Dictionary<LootResultKey, LootResultValue> displayLoot = orderedLoot;
+                int displayGil = aggregatedGil;
+
+                if(selfLootOnly) {
+                    displayLoot = orderedLoot
+                        .Where(kvp => kvp.Value.ObtainedQuantity > 0)
+                        .OrderByDescending(kvp => kvp.Value.ObtainedQuantity)
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                    displayGil = displayLoot.Sum(kvp => kvp.Value.ObtainedValue ?? (kvp.Key.ItemId == 1 ? kvp.Value.ObtainedQuantity : 0));
+
+                    if(displayLoot.Count == 0) {
+                        continue;
+                    }
                 }
-                newLootResults = newLootResults.OrderByDescending(lr => lr.Value.DroppedQuantity).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                lootResults.Add(m.Id, newLootResults);
-                totalGilValue.Add(m.Id, newTotalGil);
+
+                lootResults.Add(map.Id, displayLoot);
+                totalGilValue.Add(map.Id, displayGil);
+                filteredMaps.Add(map);
             }
+
             try {
                 _refreshLock.Wait();
-                _maps = maps;
+                _maps = selfLootOnly ? filteredMaps : maps;
                 _lootResults = lootResults;
                 _totalGilValue = totalGilValue;
+                _portalCount = _maps.Count(m => m.IsPortal);
             } finally {
                 _refreshLock.Release();
             }
+
             if(_currentPage * _maxPageSize > _maps.Count) {
                 _currentPage = 0;
             }

@@ -109,6 +109,7 @@ namespace MapPartyAssist.Helper {
             foreach(var ch in value) {
                 if(char.IsWhiteSpace(ch)
                     || ch == '.'
+                    || ch == '@'
                     || ch == '“'
                     || ch == '”'
                     || ch == '「'

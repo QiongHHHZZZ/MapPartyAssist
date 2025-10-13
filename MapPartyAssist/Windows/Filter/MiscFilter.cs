@@ -12,12 +12,15 @@ namespace MapPartyAssist.Windows.Filter {
 
         public bool ShowDeleted { get; set; }
 
+        public bool SelfLootOnly { get; set; }
+
         public MiscFilter() { }
 
         internal MiscFilter(Plugin plugin, Action action, MiscFilter? filter = null) : base(plugin, action) {
             if(filter is not null) {
                 LootOnly = filter.LootOnly;
                 ShowDeleted = filter.ShowDeleted;
+                SelfLootOnly = filter.SelfLootOnly;
             }
         }
 
@@ -41,6 +44,14 @@ namespace MapPartyAssist.Windows.Filter {
                 if(ImGui.Checkbox(Loc.Tr("Show deleted/incomplete"), ref showDeleted)) {
                     _plugin!.DataQueue.QueueDataOperation(() => {
                         ShowDeleted = showDeleted;
+                        Refresh();
+                    });
+                }
+                ImGui.TableNextColumn();
+                bool selfLootOnly = SelfLootOnly;
+                if(ImGui.Checkbox(Loc.Tr("Only show self-obtained loot"), ref selfLootOnly)) {
+                    _plugin!.DataQueue.QueueDataOperation(() => {
+                        SelfLootOnly = selfLootOnly;
                         Refresh();
                     });
                 }
