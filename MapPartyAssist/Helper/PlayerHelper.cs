@@ -58,23 +58,71 @@ namespace MapPartyAssist.Helper {
         }
 
         public static bool IsAliasMatch(string fullName, string abbreviatedName) {
-            var abbreviatedNameList = abbreviatedName.Trim().Split(' ');
-            var fullNameList = fullName.Trim().Split(' ');
-            if(abbreviatedNameList.Length < 2) {
+            if(string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(abbreviatedName)) {
                 return false;
             }
-            for(int i = 0; i < 2; i++) {
-                var curFullName = fullNameList[i];
-                var curAbbreviatedName = abbreviatedNameList[i];
-                if(curAbbreviatedName.Contains('.')) {
-                    if(curFullName[0] != curAbbreviatedName[0]) {
+
+            var abbreviatedNameList = abbreviatedName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var fullNameList = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if(abbreviatedNameList.Length >= 2 && fullNameList.Length >= 2) {
+                for(int i = 0; i < 2; i++) {
+                    // guard in case full name does not have both parts
+                    if(i >= fullNameList.Length || i >= abbreviatedNameList.Length) {
+                        break;
+                    }
+                    var curFullName = fullNameList[i];
+                    var curAbbreviatedName = abbreviatedNameList[i];
+                    if(curAbbreviatedName.Contains('.')) {
+                        if(curFullName.Length == 0 || curFullName[0] != curAbbreviatedName[0]) {
+                            return false;
+                        }
+                    } else if(!curFullName.Equals(curAbbreviatedName, StringComparison.OrdinalIgnoreCase)) {
                         return false;
                     }
-                } else if(!curFullName.Equals(curAbbreviatedName, StringComparison.OrdinalIgnoreCase)) {
-                    return false;
                 }
+                return true;
             }
-            return true;
+
+            // Fallback for locales that do not include spaces or abbreviations (e.g. Chinese/Korean).
+            var normalizedFull = NormalizeAlias(fullName);
+            var normalizedAbbrev = NormalizeAlias(abbreviatedName);
+            if(normalizedFull.Length == 0 || normalizedAbbrev.Length == 0) {
+                return false;
+            }
+
+            if(normalizedFull.Equals(normalizedAbbrev, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            // Allow alias without the home world or abbreviated form that still uniquely prefixes the full key.
+            if(normalizedFull.StartsWith(normalizedAbbrev, StringComparison.OrdinalIgnoreCase)
+                || normalizedAbbrev.StartsWith(normalizedFull, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string NormalizeAlias(string value) {
+            Span<char> buffer = value.Length <= 64 ? stackalloc char[value.Length] : value.ToCharArray();
+            int index = 0;
+            foreach(var ch in value) {
+                if(char.IsWhiteSpace(ch)
+                    || ch == '.'
+                    || ch == '“'
+                    || ch == '”'
+                    || ch == '「'
+                    || ch == '」'
+                    || ch == '『'
+                    || ch == '』'
+                    || ch == '"') {
+                    continue;
+                }
+
+                buffer[index++] = char.ToLowerInvariant(ch);
+            }
+
+            return new string(buffer[..index]);
         }
     }
 }

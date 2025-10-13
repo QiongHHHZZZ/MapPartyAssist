@@ -163,6 +163,18 @@ namespace MapPartyAssist.Services {
                 new Checkpoint("Open final chamber", FinalChamberRegex),
                 new Checkpoint("Clear final chamber", EmptyCagesRegex)
             }, new Checkpoint("Failure", "Cenote Ja Ja Gural has ended")) },
+            { 1059, new Duty(1059, "vault oneiron", DutyStructure.Slots, 5, new() {
+                new Checkpoint("Complete 1st Summon"),
+                new Checkpoint("Defeat 1st Summon"),
+                new Checkpoint("Complete 2nd Summon"),
+                new Checkpoint("Defeat 2nd Summon"),
+                new Checkpoint("Complete 3rd Summon"),
+                new Checkpoint("Defeat 3rd Summon"),
+                new Checkpoint("Complete 4th Summon"),
+                new Checkpoint("Defeat 4th Summon"),
+                new Checkpoint("Complete final Summon"),
+                new Checkpoint("Defeat final Summon")
+            }, new Checkpoint("Failure", "Vault Oneiron has ended")) },
             { 1060, new Duty(1060, "vault oneiron", DutyStructure.Slots, 5, new() {
                 new Checkpoint("Complete 1st Summon"),
                 new Checkpoint("Defeat 1st Summon"),
@@ -182,7 +194,15 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez )[\d,\.\W]+(?= gils)", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast )[\d,\.\W]+(?= Gil erhalten)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"[\d,\.\W]+(?=ギルを手に入れた)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(?<=获得了)[\d,\.]+(?=金币)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?<=获得了)[\d,\.零〇一二三四五六七八九十百千万亿億]+(?=金币)", RegexOptions.IgnoreCase) }
+        };
+
+        internal static readonly Dictionary<ClientLanguage, string> GilItemNames = new() {
+            { ClientLanguage.English, "gil" },
+            { ClientLanguage.French, "gils" },
+            { ClientLanguage.German, "gil" },
+            { ClientLanguage.Japanese, "ギル" },
+            { LanguageHelper.ChineseSimplified, "金币" }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> LootListRegex = new() {
@@ -198,7 +218,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez .?)(le|la|l'|un|une|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast .?)(ein|eine|einen|der|die|den|dem|des|[\.,\d]+)\b", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"[\.,\d]*(?=(個|を)手に入れた。)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(?:(?<=×)\s*(?<qty>[\d,\.]+)|(?<=获得了)\s*(?<qty>[\d,\.]*))", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?:(?<=你获得了[^×]*×)\s*(?<qty>[\d,\.]+)|(?<=你获得了)\s*(?<qty>[\d,\.]*))", RegexOptions.IgnoreCase) }
         };
 
         //EN note: does not work with items beginning with no indefinite
@@ -209,7 +229,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"(?<=Vous obtenez .?(un|une|[\.,\d])+\s)[\w\s]*", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"(?<=Du hast .?(ein|eine|einen|[\.,\d]+)\s)[\w\s]*(?= erhalten)", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@".*(?=を[\d]*個手に入れた。)", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"获得了\s*(?:[\d,\.]+\s*)?(?:\(\+\d+%?\))?\s*(?:枚|个|张|只|束|把|台|桶|册|朵|支|块|条|件|份|颗|棵|箱|袋|壶|杯|盏|瓶|套|卷|片|根)?\s*(?<item>[^。×]*)", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(?<=你获得了\s*)(?:[\d,\.]+\s*)?(?:\(\+\d+%?\))?\s*(?:枚|个|张|只|束|把|台|桶|册|朵|支|块|条|件|份|颗|棵|箱|袋|壶|杯|盏|瓶|套|卷|片|根)?\s*(?<item>[^。×]*)", RegexOptions.IgnoreCase) }
         };
 
         internal static readonly Dictionary<ClientLanguage, Regex> PartyMemberObtainedRegex = new() {
@@ -226,7 +246,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^[A-Za-z-']+\.? [A-Za-z-']+\.?", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^[A-Za-z-']+\.? [A-Za-z-']+\.?", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^[A-Za-z-']+\.? [A-Za-z-']+\.?", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^[\p{L}\p{IsCJKUnifiedIdeographs}'·]+(?:\s[\p{L}\p{IsCJKUnifiedIdeographs}'·]+)?$", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^[\p{IsCJKUnifiedIdeographs}\w'·-]+(?:\s[\p{IsCJKUnifiedIdeographs}\w'·-]+)*(?=\s*(?:获得|取得|拾取|拾获|获得了|得到了|使用|发动|施放|打开|发现|成功|失败|召唤|挖掘|消耗|失去了|放弃|准备|正在))", RegexOptions.IgnoreCase) }
         };
 
         //LogMessage: 3777, 3800
@@ -397,6 +417,8 @@ namespace MapPartyAssist.Services {
         public DutyManager(Plugin plugin) {
             _plugin = plugin;
 
+            PopulateDutyMetadata();
+
             //setup regexes
             foreach(var duty in Duties) {
                 duty.Value.FailureCheckpoint = new Checkpoint("Failure", GetFailureRegex(duty.Value.DutyId));
@@ -427,6 +449,58 @@ namespace MapPartyAssist.Services {
                 _plugin.DataQueue.QueueDataOperation(() => {
                     PickupLastDuty();
                 });
+            }
+        }
+
+        private void PopulateDutyMetadata() {
+            try {
+                List<ClientLanguage?> languages = new();
+                var currentLanguage = _plugin.ClientState.ClientLanguage;
+                if(_plugin.IsLanguageSupported(currentLanguage)) {
+                    languages.Add(currentLanguage);
+                }
+                if(!languages.Contains((ClientLanguage?)ClientLanguage.English)) {
+                    languages.Add(ClientLanguage.English);
+                }
+                languages.Add(null);
+
+                ContentFinderCondition? GetContentRow(uint dutyId) {
+                    foreach(var language in languages.Distinct()) {
+                        try {
+                            var sheet = language.HasValue
+                                ? _plugin.DataManager.GetExcelSheet<ContentFinderCondition>(language.Value)
+                                : _plugin.DataManager.GetExcelSheet<ContentFinderCondition>();
+                            if(sheet == null) {
+                                continue;
+                            }
+
+                            var candidate = sheet.GetRow(dutyId);
+                            if(candidate is ContentFinderCondition value) {
+                                return value;
+                            }
+                        } catch(Exception ex) {
+                            _plugin.Log.Debug(ex, $"Failed to load ContentFinderCondition sheet for language {language}.");
+                        }
+                    }
+
+                    return null;
+                }
+
+                foreach(var dutyEntry in Duties) {
+                    var row = GetContentRow((uint)dutyEntry.Key);
+                    uint? territoryTypeId = null;
+                    if(row is ContentFinderCondition cfc) {
+                        try {
+                            territoryTypeId = cfc.TerritoryType.RowId;
+                        } catch(Exception ex) {
+                            _plugin.Log.Debug(ex, $"Unable to resolve territory for duty {dutyEntry.Key} from ContentFinderCondition.");
+                        }
+                    }
+
+                    dutyEntry.Value.TerritoryTypeId = territoryTypeId;
+                }
+            } catch(Exception ex) {
+                _plugin.Log.Error(ex, "Failed to populate duty metadata from ContentFinderCondition.");
             }
         }
 
@@ -679,10 +753,13 @@ namespace MapPartyAssist.Services {
                 Match m = LanguageHelper.GetValue(GilObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message.Text);
                 if(m.Success) {
                     string parsedGilString = m.Value.Replace(",", "").Replace(".", "").Replace(" ", "");
-                    int gil = int.Parse(parsedGilString);
-                    results.TotalGil += gil;
-                    AddLootResults(results, 1, false, gil, _plugin.GameStateManager.GetCurrentPlayer());
-                    isChange = true;
+                    if(!int.TryParse(parsedGilString, out var gil) && !RegexHelper.TryParseChineseNumber(parsedGilString, out gil)) {
+                        _plugin.Log.Warning($"Cannot parse gil amount '{parsedGilString}'");
+                    } else {
+                        results.TotalGil += gil;
+                        AddLootResults(results, 1, false, gil, _plugin.GameStateManager.GetCurrentPlayer());
+                        isChange = true;
+                    }
                 }
                 //self loot obtained
             } else if(message.Channel == 8254 || message.Channel == 4158 || message.Channel == 2110) {
@@ -708,12 +785,20 @@ namespace MapPartyAssist.Services {
                         }
                         //tomestones
                         //Japanese has no plural...
-                        var rowId = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese ? _plugin.GetRowId<Item>(itemName, "Plural", GrammarCase.Accusative) : _plugin.GetRowId<Item>(itemName, "Singular", GrammarCase.Accusative);
+                        bool usePluralForm = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese;
+                        var rowId = _plugin.ResolveItemRowId(itemName, usePluralForm);
                         if(rowId is not null) {
                             AddLootResults(results, (uint)rowId, false, quantity, currentPlayer);
                             isChange = true;
                         } else {
-                            _plugin.Log.Warning($"Cannot find rowId for {itemName}");
+                            var localizedGilName = LanguageHelper.GetValue(GilItemNames, _plugin.ClientState.ClientLanguage);
+                            if(itemName.Equals(localizedGilName, StringComparison.OrdinalIgnoreCase)
+                                || GilItemNames.Values.Any(name => itemName.Equals(name, StringComparison.OrdinalIgnoreCase))) {
+                                AddLootResults(results, 1, false, quantity, currentPlayer);
+                                isChange = true;
+                            } else {
+                                _plugin.Log.Warning($"Cannot find rowId for {itemName}");
+                            }
                         }
                     }
                 } else {

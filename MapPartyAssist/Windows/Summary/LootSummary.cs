@@ -59,10 +59,11 @@ namespace MapPartyAssist.Windows.Summary {
             int newTotalGilValueDropped = 0;
             string newLootCSV = string.Join(",", new[] { Loc.Tr("Category"), Loc.Tr("Quality"), Loc.Tr("Name"), Loc.Tr("Dropped"), Loc.Tr("Obtained"), Loc.Tr("Unit Price") }) + "\n";
 
-            List<string> selfPlayers = new();
-            _plugin.StorageManager.GetPlayers().Query().Where(p => p.IsSelf).ToList().ForEach(p => {
-                selfPlayers.Add(p.Key);
-            });
+            var selfPlayers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
+            if(!string.IsNullOrEmpty(currentPlayerKey)) {
+                selfPlayers.Add(currentPlayerKey);
+            }
 
             var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
             var addLootResult = (LootResult lootResult, int playerCount) => {

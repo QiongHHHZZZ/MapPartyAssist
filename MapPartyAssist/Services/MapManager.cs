@@ -94,6 +94,14 @@ namespace MapPartyAssist.Services {
             { LanguageHelper.ChineseSimplified, new Regex(@"(?<=“).+(?=”消失了……)", RegexOptions.IgnoreCase) }
         };
 
+        private static readonly Dictionary<ClientLanguage, Regex> PortalAppearedRegex = new() {
+            { ClientLanguage.English, new Regex(@"A portal to .* appears!$", RegexOptions.IgnoreCase) },
+            { ClientLanguage.French, new Regex(@".* apparaît !$", RegexOptions.IgnoreCase) },
+            { ClientLanguage.German, new Regex(@".* erscheint!$", RegexOptions.IgnoreCase) },
+            { ClientLanguage.Japanese, new Regex(@".+への転送魔紋が現れた！$", RegexOptions.IgnoreCase) },
+            { LanguageHelper.ChineseSimplified, new Regex(@"通往.+的传送魔纹出现了！$", RegexOptions.IgnoreCase) }
+        };
+
         //LogMessage: 3759
         private static readonly Dictionary<ClientLanguage, Regex> DiscoverCofferRegex = new() {
             { ClientLanguage.English, new Regex(@"discover a treasure coffer!$", RegexOptions.IgnoreCase) },
@@ -126,7 +134,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"utilise Excavation\.$", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"setzt Ausgraben ein\.$", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"の「ディグ」$", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"(发动|使用|施放)了[“「]挖掘[”」]。$", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"(发动|使用|施放)了\s*(?:[“「])?挖掘(?:[”」])?[。！]$", RegexOptions.IgnoreCase) }
         };
 
         private static readonly Dictionary<ClientLanguage, Regex> SelfDigRegex = new() {
@@ -134,7 +142,7 @@ namespace MapPartyAssist.Services {
             { ClientLanguage.French, new Regex(@"^Vous utilisez Excavation\.$", RegexOptions.IgnoreCase) },
             { ClientLanguage.German, new Regex(@"^Du setzt Ausgraben ein\.$", RegexOptions.IgnoreCase) },
             { ClientLanguage.Japanese, new Regex(@"^の「ディグ」の「ディグ」$", RegexOptions.IgnoreCase) }, //should always fail
-            { LanguageHelper.ChineseSimplified, new Regex(@"^你(发动|使用|施放)了[“「]挖掘[”」]。$", RegexOptions.IgnoreCase) }
+            { LanguageHelper.ChineseSimplified, new Regex(@"^你(发动|使用|施放)了\s*(?:[“「])?挖掘(?:[”」])?[。！]$", RegexOptions.IgnoreCase) }
         };
 
         //Addon: 2276, 8107
@@ -275,6 +283,16 @@ namespace MapPartyAssist.Services {
                         //key = playerKey ?? "";
                         isPortal = true;
                         newMapFound = true;
+                        if(playerKey is null) {
+                            var aliasMatch = LanguageHelper.GetValue(DutyManager.PlayerAliasRegex, _plugin.ClientState.ClientLanguage).Match(message);
+                            if(aliasMatch.Success) {
+                                var matchedKey = _plugin.GameStateManager.MatchAliasToPlayer(aliasMatch.Value);
+                                if(!matchedKey.IsNullOrEmpty()) {
+                                    playerKey = matchedKey;
+                                }
+                            }
+                            playerKey ??= _plugin.GameStateManager.GetCurrentPlayer();
+                        }
                     } else {
                         // Compare to last map to verify ownership
                         if(lastMap != null) {
@@ -344,6 +362,28 @@ namespace MapPartyAssist.Services {
                     //block portals from adding maps for a brief period to avoid double counting
                     //this can cause issues where someone opens a thief map immediately after, but whatever
                     _portalBlockUntil = DateTime.Now.AddSeconds(_portalBlockSeconds);
+                } else if(GetRegex(PortalAppearedRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
+                    _plugin.Log.Debug("Portal appeared...");
+                    if(lastMap != null) {
+                        lastMap.IsPortal = true;
+                        if(_plugin.GameStateManager.CurrentPartyList.Count == 1) {
+                            var currentPlayer = _plugin.GameStateManager.GetCurrentPlayer();
+                            if(!currentPlayer.IsNullOrEmpty()) {
+                                if(lastMap.Owner.IsNullOrEmpty()) {
+                                    lastMap.Owner = currentPlayer;
+                                }
+                                if(_lockedInDiggerKey.IsNullOrEmpty()) {
+                                    _lockedInDiggerKey = currentPlayer;
+                                    _candidateCount = 1;
+                                }
+                            }
+                        }
+                        _boundByMapDuty = true;
+                        _boundByMapDutyDelayed = true;
+                        isChange = true;
+                    } else {
+                        _plugin.Log.Warning("检测到传送门出现，但没有找到对应的地图记录。");
+                    }
                 }
             } else if((int)type == 4139 || (int)type == 2091) {
                 if(GetRegex(SelfDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
@@ -401,9 +441,12 @@ namespace MapPartyAssist.Services {
                     Match m = LanguageHelper.GetValue(DutyManager.GilObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message);
                     if(m.Success) {
                         string parsedGilString = m.Value.Replace(",", "").Replace(".", "").Replace(" ", "");
-                        int gil = int.Parse(parsedGilString);
-                        AddLootResults(lastMap, 1, false, gil, _plugin.GameStateManager.GetCurrentPlayer());
-                        isChange = true;
+                        if(!int.TryParse(parsedGilString, out var gil) && !RegexHelper.TryParseChineseNumber(parsedGilString, out gil)) {
+                            _plugin.Log.Warning($"无法解析金币数量：{parsedGilString}");
+                        } else {
+                            AddLootResults(lastMap, 1, false, gil, _plugin.GameStateManager.GetCurrentPlayer());
+                            isChange = true;
+                        }
                     }
                     //player loot obtained
                 } else if((int)type == 8254 || (int)type == 4158 || (int)type == 2110) {
@@ -428,12 +471,20 @@ namespace MapPartyAssist.Services {
                             }
                             //tomestones...
                             //Japanese has no plural...
-                            var rowId = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese ? _plugin.GetRowId<Item>(itemName, "Plural", GrammarCase.Accusative) : _plugin.GetRowId<Item>(itemName, "Singular", GrammarCase.Accusative);
+                            bool usePluralForm = quantity != 1 && _plugin.ClientState.ClientLanguage != ClientLanguage.Japanese;
+                            var rowId = _plugin.ResolveItemRowId(itemName, usePluralForm);
                             if(rowId is not null) {
                                 AddLootResults(lastMap, (uint)rowId, false, quantity, currentPlayer);
                                 isChange = true;
                             } else {
-                                _plugin.Log.Warning($"无法找到 {itemName} 对应的表项 ID。");
+                                var localizedGilName = LanguageHelper.GetValue(DutyManager.GilItemNames, _plugin.ClientState.ClientLanguage);
+                                if(itemName.Equals(localizedGilName, StringComparison.OrdinalIgnoreCase)
+                                    || DutyManager.GilItemNames.Values.Any(name => itemName.Equals(name, StringComparison.OrdinalIgnoreCase))) {
+                                    AddLootResults(lastMap, 1, false, quantity, currentPlayer);
+                                    isChange = true;
+                                } else {
+                                    _plugin.Log.Warning($"无法找到 {itemName} 对应的表项 ID。");
+                                }
                             }
                         }
                     } else {
@@ -482,7 +533,11 @@ namespace MapPartyAssist.Services {
             }
 
             if(newMapFound && _plugin.GameStateManager.CurrentPartyList.Count > 0 && !playerKey.IsNullOrEmpty()) {
-                AddMap(_plugin.GameStateManager.CurrentPartyList[playerKey], null, mapType, false, isPortal);
+                if(_plugin.GameStateManager.CurrentPartyList.ContainsKey(playerKey)) {
+                    AddMap(_plugin.GameStateManager.CurrentPartyList[playerKey], null, mapType, false, isPortal);
+                } else {
+                    _plugin.Log.Warning($"无法在当前队伍列表中找到 {playerKey} 的玩家记录，已跳过传送门匹配。");
+                }
             }
         }
 
@@ -778,6 +833,3 @@ namespace MapPartyAssist.Services {
         }
     }
 }
-
-
-

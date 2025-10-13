@@ -16,6 +16,7 @@ namespace MapPartyAssist.Types {
         //not used
         public Type? ResultsType { get; init; }
         public List<Checkpoint>? Checkpoints { get; init; }
+        public uint? TerritoryTypeId { get; set; }
         //have to be able to set in duty manager constructor...
         public Checkpoint? FailureCheckpoint { get; set; }
         public string[]? LesserSummons { get; init; }

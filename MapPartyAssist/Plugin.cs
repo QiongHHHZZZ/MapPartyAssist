@@ -457,6 +457,60 @@ namespace MapPartyAssist {
             return TranslateDataTableEntry<BNpcName>(npcName, "Singular", GrammarCase.Nominative, destinationLanguage, originLanguage);
         }
 
+        public uint? ResolveItemRowId(string itemName, bool usePluralForm, ClientLanguage? languageOverride = null) {
+            var languageToUse = languageOverride ?? ClientState.ClientLanguage;
+            var casesToTry = new[] {
+                GrammarCase.Accusative,
+                GrammarCase.Nominative,
+                GrammarCase.Dative,
+                GrammarCase.Genitive
+            };
+
+            foreach(var gramCase in casesToTry) {
+                try {
+                    var rowIdAttempt = usePluralForm
+                        ? GetRowId<Item>(itemName, "Plural", gramCase, languageToUse)
+                        : GetRowId<Item>(itemName, "Singular", gramCase, languageToUse);
+                    if(rowIdAttempt.HasValue) {
+                        return rowIdAttempt;
+                    }
+                } catch(ArgumentException) {
+                    //language not supported for this case/column combination, continue to next attempt
+                }
+            }
+
+            try {
+                var sheet = DataManager.GetExcelSheet<Item>(languageToUse);
+                if(sheet != null) {
+                    string normalizedTarget = NormalizeComparisonString(itemName);
+                    foreach(var row in sheet) {
+                        string normalizedSingular = NormalizeComparisonString(row.Singular.ToString());
+                        if(!string.IsNullOrEmpty(normalizedSingular) && string.Equals(normalizedTarget, normalizedSingular, StringComparison.OrdinalIgnoreCase)) {
+                            return row.RowId;
+                        }
+
+                        if(usePluralForm) {
+                            string normalizedPlural = NormalizeComparisonString(row.Plural.ToString());
+                            if(!string.IsNullOrEmpty(normalizedPlural) && string.Equals(normalizedTarget, normalizedPlural, StringComparison.OrdinalIgnoreCase)) {
+                                return row.RowId;
+                            }
+                        }
+                    }
+                }
+            } catch(Exception ex) {
+                Log.Warning(ex, $"Unable to resolve item row id for '{itemName}' in language {languageToUse}.");
+            }
+
+            if(LanguageHelper.TryGetChineseSimplified(out var chineseLanguage) && languageToUse != chineseLanguage) {
+                var chineseFallback = ResolveItemRowId(itemName, usePluralForm, chineseLanguage);
+                if(chineseFallback.HasValue) {
+                    return chineseFallback;
+                }
+            }
+
+            return null;
+        }
+
         public string TranslateDataTableEntry<T>(string data, string column, GrammarCase gramCase, ClientLanguage destinationLanguage, ClientLanguage? originLanguage = null) where T : struct, IExcelRow<T> {
             originLanguage ??= ClientState.ClientLanguage;
             uint? rowId = null;
@@ -579,7 +633,8 @@ namespace MapPartyAssist {
                 return string.Empty;
             }
 
-            return Regex.Replace(value.Trim(), "\\s+", " ");
+            var normalized = Regex.Replace(value.Trim(), "[\\uE000-\\uF8FF]", string.Empty);
+            return Regex.Replace(normalized, "\\s+", " ");
         }
         //male = 0, female = 1, neuter = 2
         private static string ReplaceGermanDeclensionPlaceholders(string input, int gender, bool isPlural, GrammarCase gramCase) {

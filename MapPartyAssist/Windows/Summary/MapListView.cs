@@ -8,6 +8,7 @@ using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
 using MapPartyAssist.Localization;
 using MapPartyAssist.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -43,10 +44,11 @@ namespace MapPartyAssist.Windows.Summary {
             Dictionary<ObjectId, int> totalGilValue = new();
             _portalCount = 0;
             //calculate loot results (this is largely duplicated from lootsummary)
-            List<string> selfPlayers = new();
-            _plugin.StorageManager.GetPlayers().Query().Where(p => p.IsSelf).ToList().ForEach(p => {
-                selfPlayers.Add(p.Key);
-            });
+            var selfPlayers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
+            if(!string.IsNullOrEmpty(currentPlayerKey)) {
+                selfPlayers.Add(currentPlayerKey);
+            }
 
             var itemSheet = _plugin.DataManager.GetExcelSheet<Item>();
             foreach(var m in maps) {

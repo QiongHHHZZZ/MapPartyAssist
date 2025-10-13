@@ -97,6 +97,23 @@ namespace MapPartyAssist.Windows {
                                 }
                                 return false;
                             }).ToList();
+
+                            bool MatchesDuty(int dutyId) {
+                                if(!_plugin.DutyManager.Duties.TryGetValue(dutyId, out var duty)) {
+                                    return mapFilter.FilterState[TreasureMapCategory.Unknown];
+                                }
+
+                                if(duty.TerritoryTypeId is null) {
+                                    return mapFilter.FilterState[TreasureMapCategory.Unknown];
+                                }
+
+                                var category = MapHelper.GetCategory((int)duty.TerritoryTypeId.Value);
+                                return mapFilter.FilterState.ContainsKey(category) ? mapFilter.FilterState[category] : mapFilter.FilterState[TreasureMapCategory.Unknown];
+                            }
+
+                            dutyResults = dutyResults.Where(dr => MatchesDuty(dr.DutyId)).ToList();
+                            imports = imports.Where(i => MatchesDuty(i.DutyId)).ToList();
+
                             _plugin.Configuration.StatsWindowFilters.MapFilter = mapFilter;
                             break;
                         case Type _ when filter.GetType() == typeof(OwnerFilter):
