@@ -1,11 +1,8 @@
 using Dalamud.Game;
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
 using MapPartyAssist.Localization;
@@ -21,20 +18,6 @@ using System.Threading.Tasks;
 namespace MapPartyAssist.Services {
     //internal service for managing treasure maps and map links
     internal class MapManager : IDisposable {
-        //internal MPAMap? LastMap {
-        //    get {
-        //        if(_lastMap is not null) {
-        //            return _lastMap;
-        //        } else {
-        //            _lastMap = _plugin.StorageManager.GetMaps().Query().Where(m => !m.IsDeleted).OrderBy(m => m.Time).ToList().LastOrDefault();
-        //            return _lastMap;
-        //        }
-        //    }
-        //    set {
-        //        _lastMap = value;
-        //    }
-        //}
-
         internal MPAMap? GetLastMap() {
             return _plugin.StorageManager.GetMaps().Query().Where(m => !m.IsDeleted).OrderBy(m => m.Time).ToList().LastOrDefault();
         }
@@ -65,7 +48,6 @@ namespace MapPartyAssist.Services {
         private int _candidateCount;
         private DateTime _lastMapTime = DateTime.UnixEpoch;
         private DateTime _portalBlockUntil = DateTime.UnixEpoch;
-        private bool _boundByMapDuty;
         private bool _boundByMapDutyDelayed;
 
         //LogMessage: 3778
@@ -145,70 +127,23 @@ namespace MapPartyAssist.Services {
             { LanguageHelper.ChineseSimplified, new Regex(@"^你(发动|使用|施放)了\s*(?:[“「])?挖掘(?:[”」])?[。！]$", RegexOptions.IgnoreCase) }
         };
 
-        //Addon: 2276, 8107
-        private static readonly Dictionary<ClientLanguage, Regex> TreasureHuntRegex = new() {
-            { ClientLanguage.English, new Regex(@"^Treasure Hunt$", RegexOptions.IgnoreCase) },
-            { ClientLanguage.French, new Regex(@"^Chasse aux trésors$", RegexOptions.IgnoreCase) },
-            { ClientLanguage.German, new Regex(@"^Schatzsuche$", RegexOptions.IgnoreCase) },
-            { ClientLanguage.Japanese, new Regex(@"^トレジャーハント$", RegexOptions.IgnoreCase) },
-            { LanguageHelper.ChineseSimplified, new Regex(@"^寻宝$", RegexOptions.IgnoreCase) }
-        };
-
         public MapManager(Plugin plugin) {
             _plugin = plugin;
             _plugin.ChatGui.CheckMessageHandled += OnChatMessage;
             _plugin.ClientState.TerritoryChanged += OnTerritoryChanged;
-            //_plugin.AddonLifecycle.RegisterListener(AddonEvent.PreUpdate, "_To" + "DoList", CheckForTreasureHunt);
-
             ResetDigStatus();
         }
 
         public void Dispose() {
             _plugin.ChatGui.CheckMessageHandled -= OnChatMessage;
             _plugin.ClientState.TerritoryChanged -= OnTerritoryChanged;
-            //_plugin.AddonLifecycle.UnregisterListener(CheckForTreasureHunt);
         }
 
         private void OnTerritoryChanged(ushort territoryId) {
             _plugin.DataQueue.QueueDataOperation(() => {
                 ResetDigStatus();
-                _boundByMapDuty = false;
                 _boundByMapDutyDelayed = false;
             });
-        }
-
-        private unsafe void CheckForTreasureHunt(AddonEvent type, AddonArgs args) {
-            //_plugin.Log.Debug("pre refresh task list!");
-            var addon = (AtkUnitBase*)args.Addon.Address;
-            if(addon == null) {
-                return;
-            }
-            var dutyTimerNode = AtkNodeHelper.GetNodeByIDChain(addon, 1, 4, 5);
-            var dutyNameNode = AtkNodeHelper.GetNodeByIDChain(addon, 1, 4, 3);
-            var baseNode = addon->GetNodeById(4);
-            if(dutyNameNode == null || baseNode == null) {
-                return;
-            }
-
-            var dutyName = dutyNameNode->GetAsAtkTextNode()->NodeText.ToString();
-            //var rowId = _plugin.GetRowId<Addon>(dutyNameNode->GetAsAtkTextNode()->NodeText.ToString(), "Text");
-
-            if(baseNode->IsVisible() && GetRegex(TreasureHuntRegex, _plugin.ClientState.ClientLanguage).IsMatch(dutyName)) {
-                if(!_boundByMapDuty) {
-                    _plugin.Log.Debug($"Bound by map duty!");
-                    _portalBlockUntil = DateTime.UnixEpoch;
-                }
-                _boundByMapDuty = true;
-                _boundByMapDutyDelayed = true;
-
-            } else if(_boundByMapDuty) {
-                _plugin.Log.Debug($"No longer bound by map duty!");
-                //_boundByMapDuty = false;
-                ////add delay since we can miss some loot messages otherwise
-                //_plugin.DataQueue.QueueDataOperation(() => {
-                //    _boundByMapDutyDelayed = false;
-                //});
-            }
         }
 
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
@@ -322,7 +257,6 @@ namespace MapPartyAssist.Services {
                 } else if(GetRegex(DiscoverCofferRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     _plugin.Log.Debug("Coffer discovered...");
                     //find (non-current PC) party member with the closest matching dig time and assume they are owner
-                    _boundByMapDuty = true;
                     _boundByMapDutyDelayed = true;
                     var currentPlayer = _plugin.GameStateManager.GetCurrentPlayer();
                     _lockedInDiggerKey = currentPlayer != null ? GetLikelyMapOwner(messageTime, currentPlayer) : GetLikelyMapOwner(messageTime);
@@ -378,7 +312,6 @@ namespace MapPartyAssist.Services {
                                 }
                             }
                         }
-                        _boundByMapDuty = true;
                         _boundByMapDutyDelayed = true;
                         isChange = true;
                     } else {

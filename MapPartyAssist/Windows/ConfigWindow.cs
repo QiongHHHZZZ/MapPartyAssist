@@ -8,6 +8,8 @@ using MapPartyAssist.Helper;
 using MapPartyAssist.Localization;
 using MapPartyAssist.Settings;
 using MapPartyAssist.Types;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace MapPartyAssist.Windows {
@@ -173,29 +175,52 @@ namespace MapPartyAssist.Windows {
                 }
             }
 
-            foreach(var dutyConfig in _plugin.Configuration.DutyConfigurations) {
-                if(ImGui.CollapsingHeader($"{_plugin.DutyManager.Duties[dutyConfig.Key].GetDisplayName()}##Header")) {
-                    using(var table = ImRaii.Table($"##{dutyConfig.Key}--ConfigTable", 2, ImGuiTableFlags.NoBordersInBody | ImGuiTableFlags.NoHostExtendX)) {
+            Dictionary<string, List<int>> dutyGroupsLookup = new();
+            List<(string DisplayName, List<int> DutyIds)> dutyGroups = new();
+            foreach(var duty in _plugin.DutyManager.Duties) {
+                if(!_plugin.Configuration.DutyConfigurations.ContainsKey(duty.Key)) {
+                    continue;
+                }
+
+                string displayName = duty.Value.GetDisplayName();
+                if(!dutyGroupsLookup.TryGetValue(displayName, out var dutyIds)) {
+                    dutyIds = new List<int>();
+                    dutyGroupsLookup.Add(displayName, dutyIds);
+                    dutyGroups.Add((displayName, dutyIds));
+                }
+                dutyIds.Add(duty.Key);
+            }
+
+            foreach(var dutyGroup in dutyGroups) {
+                string headerId = $"{dutyGroup.DisplayName}##{dutyGroup.DutyIds.First()}--Header";
+                if(ImGui.CollapsingHeader(headerId)) {
+                    using(var table = ImRaii.Table($"##{dutyGroup.DutyIds.First()}--ConfigTable", 2, ImGuiTableFlags.NoBordersInBody | ImGuiTableFlags.NoHostExtendX)) {
                         if(table) {
                             //ImGui.TableSetupColumn("config1", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 200f);
                             //ImGui.TableSetupColumn($"config2", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 200f);
                             ImGui.TableNextRow();
                             ImGui.TableNextColumn();
-                            bool displayClearSequence = dutyConfig.Value.DisplayClearSequence;
-                            if(ImGui.Checkbox(Loc.Tr("Display clear sequence") + $"##{dutyConfig.Key}--ClearSequence", ref displayClearSequence)) {
-                                dutyConfig.Value.DisplayClearSequence = displayClearSequence;
+                            bool displayClearSequence = dutyGroup.DutyIds.All(id => _plugin.Configuration.DutyConfigurations[id].DisplayClearSequence);
+                            if(ImGui.Checkbox(Loc.Tr("Display clear sequence") + $"##{dutyGroup.DutyIds.First()}--ClearSequence", ref displayClearSequence)) {
+                                foreach(var dutyId in dutyGroup.DutyIds) {
+                                    _plugin.Configuration.DutyConfigurations[dutyId].DisplayClearSequence = displayClearSequence;
+                                }
                                 _plugin.Configuration.Save();
                             }
                             ImGui.TableNextColumn();
-                            bool showDeaths = dutyConfig.Value.DisplayDeaths;
-                            if(ImGui.Checkbox(Loc.Tr("Display wipes") + $"##{dutyConfig.Key}--Wipes", ref showDeaths)) {
-                                dutyConfig.Value.DisplayDeaths = showDeaths;
+                            bool showDeaths = dutyGroup.DutyIds.All(id => _plugin.Configuration.DutyConfigurations[id].DisplayDeaths);
+                            if(ImGui.Checkbox(Loc.Tr("Display wipes") + $"##{dutyGroup.DutyIds.First()}--Wipes", ref showDeaths)) {
+                                foreach(var dutyId in dutyGroup.DutyIds) {
+                                    _plugin.Configuration.DutyConfigurations[dutyId].DisplayDeaths = showDeaths;
+                                }
                                 _plugin.Configuration.Save();
                             }
                             ImGui.TableNextColumn();
-                            bool omitZeroCheckpoints = dutyConfig.Value.OmitZeroCheckpoints;
-                            if(ImGui.Checkbox(Loc.Tr("Omit no checkpoints") + $"##{dutyConfig.Key}--NoCheckpoints", ref omitZeroCheckpoints)) {
-                                dutyConfig.Value.OmitZeroCheckpoints = omitZeroCheckpoints;
+                            bool omitZeroCheckpoints = dutyGroup.DutyIds.All(id => _plugin.Configuration.DutyConfigurations[id].OmitZeroCheckpoints);
+                            if(ImGui.Checkbox(Loc.Tr("Omit no checkpoints") + $"##{dutyGroup.DutyIds.First()}--NoCheckpoints", ref omitZeroCheckpoints)) {
+                                foreach(var dutyId in dutyGroup.DutyIds) {
+                                    _plugin.Configuration.DutyConfigurations[dutyId].OmitZeroCheckpoints = omitZeroCheckpoints;
+                                }
                                 _plugin.Configuration.Save();
                             }
                         }

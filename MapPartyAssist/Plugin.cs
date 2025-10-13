@@ -42,7 +42,7 @@ namespace MapPartyAssist {
     }
 
     public sealed class Plugin : IDalamudPlugin {
-        public string Name => "地图派对助手";
+        public string Name => "挖宝统计助手";
         private const string DatabaseName = "data.db";
         private static readonly ClientLanguage[] BaseSupportedLanguages = { ClientLanguage.English, ClientLanguage.French, ClientLanguage.German, ClientLanguage.Japanese };
 
@@ -388,7 +388,7 @@ namespace MapPartyAssist {
 
         private void OnEditCommand(string command, string args) {
             AllowEdit = !AllowEdit;
-            ChatGui.Print($"地图派对助手编辑模式：{(AllowEdit ? "开启" : "关闭")}");
+            ChatGui.Print($"挖宝统计助手编辑模式：{(AllowEdit ? "开启" : "关闭")}");
         }
 
         private void DrawUI() {

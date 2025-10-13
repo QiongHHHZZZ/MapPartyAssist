@@ -356,17 +356,17 @@ namespace MapPartyAssist.Windows.Summary {
             string owner = map.Owner ?? "";
             //MapType type = map.MapType;
 
-            if(ImGui.Checkbox(Loc.Tr("Deleted") + "##{map.Id}--Deleted", ref isDeleted)) {
+            if(ImGui.Checkbox(Loc.Tr("Deleted") + $"##{map.Id}--Deleted", ref isDeleted)) {
                 map.IsEdited = true;
                 map.IsDeleted = isDeleted;
             }
 
-            if(ImGui.Checkbox(Loc.Tr("Archived") + "##{map.Id}--Archived", ref isArchived)) {
+            if(ImGui.Checkbox(Loc.Tr("Archived") + $"##{map.Id}--Archived", ref isArchived)) {
                 map.IsEdited = true;
                 map.IsArchived = isArchived;
             }
 
-            if(ImGui.InputText(Loc.Tr("Owner") + "##{map.Id}--Owner", ref owner, 50, ImGuiInputTextFlags.AutoSelectAll)) {
+            if(ImGui.InputText(Loc.Tr("Owner") + $"##{map.Id}--Owner", ref owner, 50, ImGuiInputTextFlags.AutoSelectAll)) {
                 map.IsEdited = true;
                 map.Owner = owner;
             }

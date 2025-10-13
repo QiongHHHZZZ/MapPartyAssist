@@ -1,4 +1,4 @@
-# Map Party Assist 地图派对助手
+# Map Party Assist 挖宝统计助手
 
 用于记录藏宝图统计数据并协调宝图队伍的工具。
 
