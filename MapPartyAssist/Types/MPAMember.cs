@@ -12,8 +12,8 @@ namespace MapPartyAssist.Types {
         public List<MPAMap>? Maps { get; set; }
         public bool IsSelf { get; set; }
         public DateTime LastJoined { get; set; }
-        public MPAMapLink? MapLink { get; set; }
-        public MPAMapLink? PreviousMapLink { get; set; }
+        public MPAMapLink? MapLink { get; private set; }
+        public MPAMapLink? PreviousMapLink { get; private set; }
         [BsonId]
         public string Key => string.IsNullOrEmpty(HomeWorld) ? Name : $"{Name} {HomeWorld}";
 

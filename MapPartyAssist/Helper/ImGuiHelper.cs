@@ -45,7 +45,7 @@ namespace MapPartyAssist.Helper {
             CustomTooltip(action);
         }
 
-        internal static void CustomTooltip(System.Action action) {
+        private static void CustomTooltip(System.Action action) {
             if(ImGui.IsItemHovered()) {
                 using var tooltip = ImRaii.Tooltip();
                 action.Invoke();
@@ -59,7 +59,7 @@ namespace MapPartyAssist.Helper {
             }
         }
 
-        internal static string WrappedString(string text, float width) {
+        private static string WrappedString(string text, float width) {
             width *= ImGuiHelpers.GlobalScale;
             string[] splitStrings = text.Split(" ");
             string wrappedString = "";

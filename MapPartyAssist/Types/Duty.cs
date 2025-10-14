@@ -8,21 +8,30 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace MapPartyAssist.Types {
-    public class Duty {
-        public int DutyId { get; init; }
-        public string Name { get; init; }
-        public DutyStructure Structure { get; init; }
-        public int ChamberCount { get; init; }
-        //not used
+    public class Duty(
+        int id,
+        string name,
+        DutyStructure structure,
+        int chamberCount,
+        List<Checkpoint>? checkpoints = null,
+        Checkpoint? failureCheckpoint = null,
+        string[]? lesserSummons = null,
+        string[]? greaterSummons = null,
+        string[]? elderSummons = null,
+        string[]? finalSummons = null)
+    {
+        public int DutyId { get; } = id;
+        public string Name { get; } = name;
+        public DutyStructure Structure { get; } = structure;
+        public int ChamberCount { get; } = chamberCount;
         public Type? ResultsType { get; init; }
-        public List<Checkpoint>? Checkpoints { get; init; }
+        public List<Checkpoint>? Checkpoints { get; } = checkpoints;
         public uint? TerritoryTypeId { get; set; }
-        //have to be able to set in duty manager constructor...
-        public Checkpoint? FailureCheckpoint { get; set; }
-        public string[]? LesserSummons { get; init; }
-        public string[]? GreaterSummons { get; init; }
-        public string[]? ElderSummons { get; init; }
-        public string[]? FinalSummons { get; init; }
+        public Checkpoint? FailureCheckpoint { get; set; } = failureCheckpoint;
+        public string[]? LesserSummons { get; } = lesserSummons;
+        public string[]? GreaterSummons { get; } = greaterSummons;
+        public string[]? ElderSummons { get; } = elderSummons;
+        public string[]? FinalSummons { get; } = finalSummons;
 
         [BsonIgnore]
         public Dictionary<ClientLanguage, Regex>? LesserSummonRegex { get; set; }
@@ -32,19 +41,6 @@ namespace MapPartyAssist.Types {
         public Dictionary<ClientLanguage, Regex>? ElderSummonRegex { get; set; }
         [BsonIgnore]
         public Dictionary<ClientLanguage, Regex>? CircleShiftsRegex { get; set; }
-
-        public Duty(int id, string name, DutyStructure structure, int chamberCount, List<Checkpoint>? checkpoints = null, Checkpoint? failureCheckpoint = null, string[]? lesserSummons = null, string[]? greaterSummons = null, string[]? elderSummons = null, string[]? finalSummons = null) {
-            DutyId = id;
-            Name = name;
-            Structure = structure;
-            ChamberCount = chamberCount;
-            Checkpoints = checkpoints;
-            FailureCheckpoint = failureCheckpoint;
-            LesserSummons = lesserSummons;
-            GreaterSummons = greaterSummons;
-            ElderSummons = elderSummons;
-            FinalSummons = finalSummons;
-        }
 
         public string GetSummonPatternString(Summon summonType) {
             List<string> summonList;

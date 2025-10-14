@@ -6,14 +6,14 @@ using System.Collections.Generic;
 namespace MapPartyAssist.Types {
     [ValidatedDataType]
     public class CheckpointResults {
-        public Checkpoint Checkpoint { get; set; }
+        public Checkpoint Checkpoint { get; init; }
         public DateTime Time { get; set; }
         public bool IsReached { get; set; }
 
         //these properties should only be on RouletteCheckpointResults, but we need them here for deserialization
         public Summon? SummonType { get; set; }
-        public string? MonsterName { get; set; }
-        public bool IsSaved { get; set; }
+        public string? MonsterName { get; init; }
+        public bool IsSaved { get; init; }
 
         public List<LootResult>? LootResults { get; set; }
 

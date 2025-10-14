@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace MapPartyAssist.Types {
     [ValidatedDataType]
     public class MPAMap : IEquatable<MPAMap> {
-        public static int CurrentVersion = 1;
+        private static readonly int CurrentVersion = 1;
 
         [BsonId]
         [JsonIgnore]
@@ -18,22 +18,22 @@ namespace MapPartyAssist.Types {
         public int? Version { get; set; }
         //set to nullable since it is referenced in plugin constructor
         public string? Owner { get; set; }
-        public string Name { get; set; }
-        public string Zone { get; set; }
+        public string Name { get; init; }
+        public string Zone { get; init; }
         public DateTime Time { get; init; }
         public bool IsPortal { get; set; }
         public string? DutyName { get; set; }
         [BsonIgnore]
         public bool IsPending { get; set; }
-        public bool IsManual { get; set; }
+        public bool IsManual { get; init; }
         public bool IsDeleted { get; set; }
         public bool IsArchived { get; set; }
         public bool IsAmbiguousOwner { get; set; }
         public bool IsReassigned { get; set; }
         [BsonIgnore]
         public SeString? MapLink { get; set; }
-        public List<LootResult>? LootResults { get; set; }
-        public string[]? Players { get; set; }
+        public List<LootResult>? LootResults { get; init; }
+        public string[]? Players { get; init; }
         public int? TerritoryId { get; set; }
         public bool IsEdited { get; set; }
         public uint? EventItemId { get; set; }
@@ -79,7 +79,7 @@ namespace MapPartyAssist.Types {
         }
 
         public bool Equals(MPAMap? other) {
-            if(Id == null || other == null || other.Id == null) {
+            if(other == null) {
                 return false;
             } else {
                 return Id.Equals(other.Id);

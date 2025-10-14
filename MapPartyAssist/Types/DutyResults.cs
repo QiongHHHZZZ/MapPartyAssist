@@ -16,7 +16,7 @@ namespace MapPartyAssist.Types {
         //Version 2: loot results
         public int Version { get; set; } = 1;
         public int DutyId { get; init; }
-        public string DutyName { get; set; }
+        public string DutyName { get; init; }
         public DateTime Time { get; init; }
         public DateTime CompletionTime { get; set; }
         public string[] Players { get; set; }
@@ -24,7 +24,7 @@ namespace MapPartyAssist.Types {
         [BsonRef("map")]
         [JsonIgnore]
         public MPAMap? Map { get; set; }
-        public int TotalGil { get; set; } = 0;
+        public int TotalGil { get; set; }
         public bool IsComplete { get; set; }
         public bool IsPickup { get; set; }
         public bool IsEdited { get; set; }
@@ -44,7 +44,7 @@ namespace MapPartyAssist.Types {
             Time = DateTime.Now;
             DutyName = "";
             Owner = "";
-            Players = new string[0];
+            Players = [];
         }
 
         public DutyResults(int dutyId, string dutyName, Dictionary<string, MPAMember> players, string owner) {
@@ -92,8 +92,8 @@ namespace MapPartyAssist.Types {
             foreach(var checkpointResult in CheckpointResults) {
                 if(checkpointResult.LootResults is not null) {
                     foreach(var lr in checkpointResult.LootResults) {
-                        if(consolidatedResults.ContainsKey(lr.ItemId)) {
-                            consolidatedResults[lr.ItemId].Quantity += lr.Quantity;
+                        if(consolidatedResults.TryGetValue(lr.ItemId, out var existing)) {
+                            existing.Quantity += lr.Quantity;
                         } else {
                             consolidatedResults.Add(lr.ItemId, lr);
                         }
@@ -103,7 +103,7 @@ namespace MapPartyAssist.Types {
             return consolidatedResults.Values.OrderByDescending(l => l.Quantity).ToList();
         }
 
-        public List<LootResult> GetSummarizeLootResultsWithQuality() {
+        private List<LootResult> GetSummarizeLootResultsWithQuality() {
             List<LootResult> summarizedResults = new();
             foreach(var checkpointResult in CheckpointResults) {
                 if(checkpointResult.LootResults is not null) {

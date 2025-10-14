@@ -11,7 +11,7 @@ namespace MapPartyAssist.Types {
         public uint MapId { get; set; }
 
         [BsonIgnore]
-        private MapLinkPayload? _mapLinkPayload;
+        private readonly MapLinkPayload? _mapLinkPayload;
 
         [BsonCtor]
         public MPAMapLink() {
@@ -34,7 +34,7 @@ namespace MapPartyAssist.Types {
         }
 
         public MapLinkPayload GetMapLinkPayload() {
-            return _mapLinkPayload == null ? new MapLinkPayload(TerritoryTypeId, MapId, RawX, RawY) : _mapLinkPayload;
+            return _mapLinkPayload ?? new MapLinkPayload(TerritoryTypeId, MapId, RawX, RawY);
         }
     }
 }

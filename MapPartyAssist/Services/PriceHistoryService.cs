@@ -1,6 +1,6 @@
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Types;
-using MapPartyAssist.Types.REST.Universalis;
+using MapPartyAssist.Types.REST;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,19 +22,19 @@ namespace MapPartyAssist.Services {
         private const int _maxSaleWindowDays = 90;
         private const int _consecutiveFailCount = 5;
 
-        private Plugin _plugin;
+        private readonly Plugin _plugin;
         private Dictionary<LootResultKey, int> _priceCache = new();
         private Dictionary<LootResultKey, DateTime> _priceCacheUpdateTime = new();
         private List<uint> _toCheck = new();
         private List<uint> _blacklist = new();
         private DateTime _lastQuery;
         private CancellationTokenSource? _cancelUpdate;
-        private SemaphoreSlim _updateLock = new(1, 1);
-        private int _failCount = 0;
+        private readonly SemaphoreSlim _updateLock = new(1, 1);
+        private int _failCount;
         private float _failMultiplier = 1;
 
-        public bool IsEnabled => _cancelUpdate != null && !_cancelUpdate.IsCancellationRequested;
-        public bool IsInitialized { get; private set; } = false;
+        private bool IsEnabled => _cancelUpdate is { IsCancellationRequested : false};
+        private bool IsInitialized { get; set; }
 
         internal PriceHistoryService(Plugin plugin) {
             _plugin = plugin;
@@ -84,11 +84,12 @@ namespace MapPartyAssist.Services {
         }
 
         private async Task StartUpdateCheck() {
-            _cancelUpdate = new();
-            PeriodicTimer periodicTimer = new(TimeSpan.FromSeconds(_updateCheckSeconds));
-            while(true) {
-                CheckAndUpdate();
-                await periodicTimer.WaitForNextTickAsync(_cancelUpdate.Token);
+            _cancelUpdate = new CancellationTokenSource();
+            PeriodicTimer periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(_updateCheckSeconds));
+            try {
+                while(await periodicTimer.WaitForNextTickAsync(_cancelUpdate.Token)) {CheckAndUpdate();}
+            } catch(OperationCanceledException) {
+                _plugin.Log.Information("物价更新轮询已取消。");
             }
         }
 
@@ -193,7 +194,7 @@ namespace MapPartyAssist.Services {
             }
 
             //tokens
-            if(itemKey.ItemId >= 20 && itemKey.ItemId < 100) {
+            if(itemKey.ItemId is >= 20 and < 100) {
                 return null;
             }
 
@@ -201,11 +202,10 @@ namespace MapPartyAssist.Services {
                 return null;
             }
 
-            var row = _plugin.DataManager.GetExcelSheet<Item>()?.GetRow(itemKey.ItemId);
-            if(row is null || !row.Value.CanBeHq && itemKey.IsHQ || row.Value.IsUntradable) {
+            if(!_plugin.DataManager.GetExcelSheet<Item>().TryGetRow(itemKey.ItemId, out var row) || !row.CanBeHq && itemKey.IsHQ || row.IsUntradable) {
                 return null;
             }
-
+            
             if(_priceCache.ContainsKey(itemKey)) {
                 if(IsInitialized) {
                     if((DateTime.Now - _priceCacheUpdateTime[itemKey]).TotalHours > _staleDataHours && !_toCheck.Contains(itemKey.ItemId)) {
@@ -228,7 +228,7 @@ namespace MapPartyAssist.Services {
 #if DEBUG
             _plugin.Log.Verbose($"checking price validity ...fail count: {_failCount} ...fail multiplier: {_failMultiplier}");
 #endif
-            if(_toCheck.Count > 0 && (DateTime.Now - _lastQuery).TotalMinutes > _queryThresholdMinutes * _failMultiplier && _plugin.ClientState.IsLoggedIn && _updateLock.Wait(0)) {
+            if(_toCheck.Count > 0 && (DateTime.Now - _lastQuery).TotalMinutes > _queryThresholdMinutes * _failMultiplier && _plugin.ClientState.IsLoggedIn && await _updateLock.WaitAsync(0)) {
                 try {
                     _plugin.Log.Debug("Updating item prices from Universalis API.");
                     while(_toCheck.Count > 0) {
@@ -278,9 +278,9 @@ namespace MapPartyAssist.Services {
                 HistoryResponse? results = await QueryUniversalisHistory(itemIds, region);
                 if(results is not null) {
                     foreach(var item in results.Value.Items) {
-                        string itemName = "";
+                        
 #if DEBUG
-                        itemName = _plugin.DataManager.GetExcelSheet<Item>().GetRow(item.Key).Name.ToString();
+                        string itemName = _plugin.DataManager.GetExcelSheet<Item>().GetRow(item.Key).Name.ToString(); 
 #endif
                         //int normalTotal = 0;
                         int normalCount = 0;
@@ -308,14 +308,11 @@ namespace MapPartyAssist.Services {
                             };
                             int normalMedian = normalSales.Order().ElementAt(normalSales.Count / 2);
                             //averagePrice = normalTotal / normalCount;
-                            if(_priceCache.ContainsKey(itemKey)) {
+                            if (!_priceCache.TryAdd(itemKey, normalMedian)) {
                                 _priceCache[itemKey] = normalMedian;
-                                _priceCacheUpdateTime[itemKey] = DateTime.Now;
-                            } else {
-                                _priceCache.Add(itemKey, normalMedian);
-                                _priceCacheUpdateTime.Add(itemKey, DateTime.Now);
                             }
-                            _plugin.Log.Verbose(string.Format("ID: {0,-8} HQ:{1,-5} Name: {2,-50} Median Price: {3,-9}", item.Key, itemKey.IsHQ, itemName, normalMedian));
+                            _priceCacheUpdateTime[itemKey] = DateTime.Now;
+                            _plugin.Log.Verbose($"ID: {0,-8} HQ:{1,-5} Name: {2,-50} Median Price: {3,-9}", item.Key, itemKey.IsHQ, itemName, normalMedian);
                         }
                         if(hqCount > 0) {
                             LootResultKey itemKey = new() {
@@ -324,14 +321,11 @@ namespace MapPartyAssist.Services {
                             };
                             int hqMedian = hqSales.Order().ElementAt(hqSales.Count / 2);
                             //averagePrice = hqTotal / hqCount;
-                            if(_priceCache.ContainsKey(itemKey)) {
+                            if (!_priceCache.TryAdd(itemKey, hqMedian)) {
                                 _priceCache[itemKey] = hqMedian;
-                                _priceCacheUpdateTime[itemKey] = DateTime.Now;
-                            } else {
-                                _priceCache.Add(itemKey, hqMedian);
-                                _priceCacheUpdateTime.Add(itemKey, DateTime.Now);
                             }
-                            _plugin.Log.Verbose(string.Format("ID: {0,-8} HQ:{1,-5} Name: {2,-50} Median Price: {3,-9}", item.Key, itemKey.IsHQ, itemName, hqMedian));
+                            _priceCacheUpdateTime[itemKey] = DateTime.Now;
+                            _plugin.Log.Verbose($"ID: {0,-8} HQ:{1,-5} Name: {2,-50} Median Price: {3,-9}", item.Key, itemKey.IsHQ, itemName, hqMedian);
                         }
                     }
                     results.Value.UnresolvedItems.ForEach(AddToBlacklist);
@@ -415,7 +409,7 @@ namespace MapPartyAssist.Services {
 
     internal class HistoryResponseConverter : JsonConverter<HistoryResponse> {
 
-        public bool SingleExpected { get; init; }
+        private bool SingleExpected { get; init; }
 
         public HistoryResponseConverter(bool singleExpected) {
             SingleExpected = singleExpected;
@@ -448,9 +442,9 @@ namespace MapPartyAssist.Services {
                                 uint[]? unresolvedItems = serializer.Deserialize<uint[]>(reader);
                                 //historyResponse.UnresolvedItems = new(unresolvedItems ?? []);
                                 if(unresolvedItems != null) {
-                                    historyResponse.UnresolvedItems = new(unresolvedItems);
+                                    historyResponse.UnresolvedItems = [..unresolvedItems];
                                 } else {
-                                    historyResponse.UnresolvedItems = new();
+                                    historyResponse.UnresolvedItems = [];
                                 }
                             }
                         }
@@ -464,7 +458,7 @@ namespace MapPartyAssist.Services {
 
         public override void WriteJson(JsonWriter writer, HistoryResponse value, JsonSerializer serializer) {
             if(SingleExpected) {
-                if(value.Items != null && value.Items.Count > 0) {
+                if(value.Items.Count > 0) {
                     foreach(var item in value.Items.Values) {
                         serializer.Serialize(writer, item);
                         return;
@@ -476,25 +470,25 @@ namespace MapPartyAssist.Services {
 
             writer.WriteStartObject();
 
-            if(value.Items != null) {
+            if(value.Items.Count > 0) {
                 foreach(var entry in value.Items) {
                     writer.WritePropertyName(entry.Key.ToString());
                     serializer.Serialize(writer, entry.Value);
                 }
             }
 
-            if(value.UnresolvedItems != null && value.UnresolvedItems.Count > 0) {
+            if(value.UnresolvedItems.Count > 0) {
                 writer.WritePropertyName("unresolvedItems");
                 serializer.Serialize(writer, value.UnresolvedItems);
             }
-
-            if(value.ItemIDs != null && value.ItemIDs.Count > 0) {
+            
+            if(value.ItemIDs.Count > 0) {
                 writer.WritePropertyName("itemIDs");
                 serializer.Serialize(writer, value.ItemIDs);
             }
-
             writer.WriteEndObject();
         }
+
     }
 }
 

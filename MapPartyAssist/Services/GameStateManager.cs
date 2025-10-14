@@ -12,14 +12,14 @@ using System.Threading.Tasks;
 namespace MapPartyAssist.Services {
     internal class GameStateManager : IDisposable {
 
-        private Plugin _plugin;
-        private int _lastPartySize = 0;
+        private readonly Plugin _plugin;
+        private int _lastPartySize;
 
-        internal ushort CurrentTerritory { get; private set; } = 0;
+        internal ushort CurrentTerritory { get; private set; }
         public Dictionary<string, MPAMember> CurrentPartyList { get; private set; } = new();
         public Dictionary<string, MPAMember> RecentPartyList { get; private set; } = new();
-        public string? CurrentPlayer { get; private set; }
-        public Region? CurrentRegion { get; private set; }
+        private string? CurrentPlayer { get; set; }
+        private  Region? CurrentRegion { get; set; }
 
         public GameStateManager(Plugin plugin) {
             _plugin = plugin;
@@ -48,10 +48,10 @@ namespace MapPartyAssist.Services {
             var playerJob = _plugin.ClientState.LocalPlayer?.ClassJob.Value.Abbreviation;
             var currentPartySize = _plugin.PartyList.Length;
             var dataCenter = _plugin.ClientState.LocalPlayer?.CurrentWorld.Value.DataCenter.Value;
-            string? dataCenterName = dataCenter.HasValue ? dataCenter.Value.Name.ToString() : null;
+            string? dataCenterName = dataCenter?.Name.ToString();
             byte? regionByte = dataCenter?.Region;
             CurrentRegion = PlayerHelper.GetRegion(regionByte, dataCenterName);
-            string? currentPlayerName = _plugin.ClientState.LocalPlayer?.Name?.ToString();
+            string? currentPlayerName = _plugin.ClientState.LocalPlayer?.Name.ToString();
             string? currentPlayerWorld = _plugin.ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString();
             if(currentPlayerName != null && currentPlayerWorld != null) {
                 CurrentPlayer = $"{currentPlayerName} {currentPlayerWorld}";
@@ -76,7 +76,7 @@ namespace MapPartyAssist.Services {
         }
 
         private void OnLogin() {
-            Task.Delay(5000).ContinueWith(t => {
+            Task.Delay(5000).ContinueWith(_ => {
                 _plugin.DataQueue.QueueDataOperation(() => {
                     _plugin.MapManager.CheckAndArchiveMaps();
                     _plugin.PriceHistory.Initialize();
@@ -136,7 +136,7 @@ namespace MapPartyAssist.Services {
                     string partyMemberWorld = p.World.Value.Name.ToString();
                     var key = $"{partyMemberName} {partyMemberWorld}";
                     bool isCurrentPlayer = partyMemberName.Equals(currentPlayerKey.Name) && partyMemberWorld.Equals(currentPlayerKey.HomeWorld);
-                    var findPlayer = allPlayers.Query().Where(p => p.Key == key).FirstOrDefault();
+                    var findPlayer = allPlayers.Query().Where(player => player.Key == key).FirstOrDefault();
 
                     //new player!
                     if(findPlayer == null) {
@@ -162,9 +162,8 @@ namespace MapPartyAssist.Services {
             foreach(var player in allPlayers) {
                 TimeSpan timeSpan = DateTime.Now - player.LastJoined;
                 bool isRecent = timeSpan.TotalHours <= _plugin.Configuration.ArchiveThresholdHours;
-                bool hasMaps = currentMaps.Where(m => !m.Owner.IsNullOrEmpty() && m.Owner.Equals(player.Key)).Any();
+                bool hasMaps = currentMaps.Any(m => !m.Owner.IsNullOrEmpty() && m.Owner.Equals(player.Key));
                 bool notCurrent = !CurrentPartyList.ContainsKey(player.Key);
-                bool notSelf = !player.IsSelf;
                 if(isRecent && hasMaps && notCurrent) {
                     RecentPartyList.Add(player.Key, player);
                 }

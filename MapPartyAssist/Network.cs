@@ -1,9 +1,7 @@
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Network;
-using Lumina;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,15 +27,7 @@ namespace MapPartyAssist {
    
     private static void OnLogMessageShow(uint logId, uint param1, uint param2, uint param3)
     {
-        switch (logId)
-        {
-            case  0:
-            {
-                break;
-            }
-            
-        }
-        Svc.Log.Verbose($"MessageId:{logId}");
+        Svc.Log.Debug($"MessageId:{logId}, Param1:{param1}, Param2:{param2}, Param3:{param3}");
     }
 
     #region Network Hooks
@@ -51,7 +41,7 @@ namespace MapPartyAssist {
     );
     private static Hook<ReceivePacketInternalDelegate>? ReceivePacketInternalHook;
 
-    public static unsafe nint GetVFuncByName<T>(T* vtablePtr, string fieldName)
+    private static unsafe nint GetVFuncByName<T>(T* vtablePtr, string fieldName)
         where T : unmanaged
     {
         var vtType = typeof(T);
@@ -77,7 +67,7 @@ namespace MapPartyAssist {
             DetectMessage(packet);
        
 
-        ReceivePacketInternalHook.Original(dispatcher, targetId, packet);
+        ReceivePacketInternalHook?.Original(dispatcher, targetId, packet);
     }
 
     private static unsafe void DetectMessage(byte* packet)
@@ -103,7 +93,7 @@ namespace MapPartyAssist {
         Svc.Log.Verbose($"Packet Received: {FormatBytesSimple(packet, PacketLength)}");
     }
 
-    public static unsafe string FormatBytesSimple(byte* dataPtr, int lengthInBytes)
+    private static unsafe string FormatBytesSimple(byte* dataPtr, int lengthInBytes)
     {
         if (dataPtr == null || lengthInBytes <= 0)
         {

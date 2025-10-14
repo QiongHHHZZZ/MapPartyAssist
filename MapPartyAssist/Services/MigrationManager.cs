@@ -2,20 +2,15 @@ using Dalamud.Game;
 using Dalamud.Utility;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Helper;
-using MapPartyAssist.Settings;
 using MapPartyAssist.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace MapPartyAssist.Services {
-    internal class MigrationManager {
-        private Plugin _plugin;
-        public MigrationManager(Plugin plugin) {
-            _plugin = plugin;
-        }
-
+    internal class MigrationManager(Plugin plugin) {
+        private readonly Plugin _plugin= plugin;
+        
         internal void CheckAndMigrate() {
             try {
                 if(_plugin.Configuration.Version < 2) {
@@ -84,10 +79,10 @@ namespace MapPartyAssist.Services {
                 }
                 //set territoryid
                 if(map.TerritoryId == null && !map.Zone.IsNullOrEmpty()) {
-                    var placeNameId = _plugin.GetRowId<PlaceName>(map.Zone, "Name", GrammarCase.Nominative, ClientLanguage.English);
+                    // var placeNameId = _plugin.GetRowId<PlaceName>(map.Zone, "Name", GrammarCase.Nominative, ClientLanguage.English);
                     //assume first territory with name is correct
-                    foreach(var territory in _plugin.DataManager.GetExcelSheet<TerritoryType>()!) {
-                        if(territory.PlaceName.Value!.Name.ToString().Equals(map.Zone, StringComparison.OrdinalIgnoreCase)) {
+                    foreach(var territory in _plugin.DataManager.GetExcelSheet<TerritoryType>()) {
+                        if(territory.PlaceName.Value.Name.ToString().Equals(map.Zone, StringComparison.OrdinalIgnoreCase)) {
                             map.TerritoryId = (int?)territory.RowId;
                             updatedMaps.Add(map);
                             break;
@@ -106,7 +101,7 @@ namespace MapPartyAssist.Services {
             foreach(var result in results) {
                 try {
                     var dutyManager = _plugin.DutyManager;
-                    if(dutyManager == null || !dutyManager.Duties.TryGetValue(result.DutyId, out var duty) || duty.Checkpoints == null) {
+                    if(!dutyManager.Duties.TryGetValue(result.DutyId, out var duty) || duty.Checkpoints == null) {
                         continue;
                     }
                     if(duty.Checkpoints.Count == result.CheckpointResults.Count && result.CheckpointResults.Last().IsReached) {
@@ -114,7 +109,7 @@ namespace MapPartyAssist.Services {
                         result.CompletionTime = result.Time;
                     }
                 } catch {
-                    continue;
+                    // continue;
                 }
             }
             _plugin.StorageManager.UpdateDutyResults(results, false);

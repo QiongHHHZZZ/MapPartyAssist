@@ -6,9 +6,9 @@ namespace MapPartyAssist.Types {
         public DateTime Time { get; set; }
         //this is only used in display
         public string? ItemName { get; set; }
-        public uint ItemId { get; set; }
+        public uint ItemId { get; init; }
         public int Quantity { get; set; }
-        public bool IsHQ { get; set; }
+        public bool IsHQ { get; init; }
         public string? Recipient { get; set; }
     }
 }

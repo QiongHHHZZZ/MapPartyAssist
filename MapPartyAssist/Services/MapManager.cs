@@ -41,7 +41,7 @@ namespace MapPartyAssist.Services {
         //for setting map name
         private readonly TextInfo _textInfo = new CultureInfo("en-US", false).TextInfo;
 
-        private Plugin _plugin;
+        private readonly Plugin _plugin;
 
         private Dictionary<string, DateTime> _diggers = new();
         private string _lockedInDiggerKey = "";
@@ -188,7 +188,7 @@ namespace MapPartyAssist.Services {
             string messageText = message.ToString();
             var item = (ItemPayload?)message.Payloads.FirstOrDefault(m => m is ItemPayload);
             uint? itemId = item?.ItemId;
-            bool isHq = item is not null ? item.IsHQ : false;
+            bool isHq = item?.IsHQ ?? false;
             var mapPayload = (MapLinkPayload?)message.Payloads.FirstOrDefault(p => p.Type == PayloadType.MapLink);
             MPAMapLink? mapLink = mapPayload is not null ? new(mapPayload) : null;
             _plugin.DataQueue.QueueDataOperation(() => {
@@ -269,7 +269,7 @@ namespace MapPartyAssist.Services {
                 } else if(GetRegex(OpenCofferRegex, _plugin.ClientState.ClientLanguage).IsMatch(message) && _plugin.Functions.GetCurrentDutyId() == 0) {
                     _plugin.Log.Debug("Coffer opened...");
                     //add delay because this message occurs before "crumbles into dust" to avoid double-counting with self-dig
-                    Task.Delay(_addMapDelaySeconds * 1000).ContinueWith(t => {
+                    Task.Delay(_addMapDelaySeconds * 1000).ContinueWith(_ => {
                         _plugin.DataQueue.QueueDataOperation(() => {
                             if(!_lockedInDiggerKey.IsNullOrEmpty()) {
                                 bool isAmbiguous = _candidateCount > 1;
@@ -290,7 +290,7 @@ namespace MapPartyAssist.Services {
                         });
                     });
                     //LogMessage: 3765
-                } else if(GetRegex(DefeatAllRegex, _plugin.ClientState.ClientLanguage).IsMatch(message.ToString())) {
+                } else if(GetRegex(DefeatAllRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     _plugin.Log.Debug("Enemies defeated...");
                     ResetDigStatus();
                     //block portals from adding maps for a brief period to avoid double counting
@@ -322,14 +322,10 @@ namespace MapPartyAssist.Services {
                 if(GetRegex(SelfDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     var currentPlayerKey = _plugin.GameStateManager.GetCurrentPlayer();
                     if(!string.IsNullOrEmpty(currentPlayerKey)) {
-                        if(_diggers.ContainsKey(currentPlayerKey)) {
                             _diggers[currentPlayerKey] = messageTime;
-                        } else {
-                            _diggers.Add(currentPlayerKey, messageTime);
-                        }
                     }
                     _plugin.Log.Debug($"You used Dig...");
-                } else if(GetRegex(PartyMemberDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message.ToString())) {
+                } else if(GetRegex(PartyMemberDigRegex, _plugin.ClientState.ClientLanguage).IsMatch(message)) {
                     //no payload on Japanese self-dig or maybe others from same world...?
                     if(playerKey is null) {
                         var nominalAlias = LanguageHelper.GetValue(DutyManager.PlayerAliasRegex, _plugin.ClientState.ClientLanguage).Match(message);
@@ -340,11 +336,7 @@ namespace MapPartyAssist.Services {
                     var diggerKey = resolvedPlayer != null ? _plugin.GameStateManager.MatchAliasToPlayer(resolvedPlayer) : null;
                     if(!diggerKey.IsNullOrEmpty()) {
                         _plugin.Log.Debug($"{diggerKey} used Dig...");
-                        if(_diggers.ContainsKey(diggerKey)) {
                             _diggers[diggerKey] = messageTime;
-                        } else {
-                            _diggers.Add(diggerKey, messageTime);
-                        }
                     }
                 }
             } else if(type == XivChatType.Party || type == XivChatType.Say || type == XivChatType.Alliance || type == XivChatType.Shout || type == XivChatType.Yell || type == XivChatType.TellIncoming) {
@@ -395,7 +387,7 @@ namespace MapPartyAssist.Services {
                             AddLootResults(lastMap, (uint)itemId, isHQ, quantity, currentPlayer);
                             isChange = true;
 #if DEBUG
-                            _plugin.Log.Debug(string.Format("itemId: {0, -40} isHQ: {1, -6} quantity: {2, -5} recipient: {3}", itemId, isHQ, quantity, currentPlayer));
+                            _plugin.Log.Debug($"itemId: {itemId.ToString() ?? "null",-40} isHQ: {isHQ,-6} quantity: {quantity,-5} recipient: {currentPlayer ?? "null"}" );
 #endif
                         } else if(selfItemMatch.Success) {
                             var itemName = RegexHelper.SanitizeQuotedText(RegexHelper.GetGroupValue(selfItemMatch, "item"));
@@ -421,7 +413,7 @@ namespace MapPartyAssist.Services {
                             }
                         }
                     } else {
-                        Match m = LanguageHelper.GetValue(DutyManager.PartyMemberObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message.ToString());
+                        Match m = LanguageHelper.GetValue(DutyManager.PartyMemberObtainedRegex, _plugin.ClientState.ClientLanguage).Match(message);
                         if(m.Success) {
                             string partyQuantityText = RegexHelper.EnsureQuantityText(RegexHelper.GetGroupValue(m, "qty"), message);
                             bool isNumber = Regex.IsMatch(partyQuantityText, @"\d+");
@@ -435,7 +427,7 @@ namespace MapPartyAssist.Services {
                                 AddLootResults(lastMap, (uint)itemId, isHQ, quantity, playerKey);
                                 isChange = true;
 #if DEBUG
-                                _plugin.Log.Debug(string.Format("itemId: {0, -40} isHQ: {1, -6} quantity: {2, -5} recipient: {3}", itemId, isHQ, quantity, playerKey));
+                                _plugin.Log.Debug($"itemId: {itemId.ToString() ?? "null",-40} isHQ: {isHQ,-6} quantity: {quantity,-5} recipient: {playerKey ?? "null"}");
 #endif
                             }
                         }
@@ -443,7 +435,7 @@ namespace MapPartyAssist.Services {
 
                     //check for loot list
                 } else if(type == XivChatType.SystemMessage) {
-                    Match m = LanguageHelper.GetValue(DutyManager.LootListRegex, _plugin.ClientState.ClientLanguage).Match(message.ToString());
+                    Match m = LanguageHelper.GetValue(DutyManager.LootListRegex, _plugin.ClientState.ClientLanguage).Match(message);
                     if(m.Success) {
                         string lootQuantityText = RegexHelper.EnsureQuantityText(RegexHelper.GetGroupValue(m, "qty"), message);
                         bool isNumber = Regex.IsMatch(lootQuantityText, @"\d+");
@@ -452,7 +444,7 @@ namespace MapPartyAssist.Services {
                             AddLootResults(lastMap, (uint)itemId, isHQ, quantity, playerKey);
                             isChange = true;
 #if DEBUG
-                            _plugin.Log.Verbose(string.Format("itemId: {0, -40} isHQ: {1, -6} quantity: {2, -5}", itemId, isHQ, quantity));
+                            _plugin.Log.Verbose($"itemId: {0, -40} isHQ: {1, -6} quantity: {2, -5}", itemId, isHQ, quantity);
                             _plugin.Log.Debug($"value: {m.Value} isNumber: {isNumber} quantity: {quantity}");
 #endif
                         }
@@ -480,8 +472,8 @@ namespace MapPartyAssist.Services {
 
             if(_plugin.IsLanguageSupported()) {
                 //have to do lookup on PlaceName sheet otherwise will not translate properly
-                var placeNameId = _plugin.DataManager.GetExcelSheet<TerritoryType>(ClientLanguage.English)?.GetRow(_plugin.GameStateManager.CurrentTerritory).PlaceName.Value.RowId;
-                zone ??= placeNameId != null ? _plugin.DataManager.GetExcelSheet<PlaceName>(ClientLanguage.English)!.GetRow((uint)placeNameId)!.Name.ToString() : "";
+                var placeNameId = _plugin.DataManager.GetExcelSheet<TerritoryType>(ClientLanguage.English).GetRow(_plugin.GameStateManager.CurrentTerritory).PlaceName.Value.RowId;
+                zone ??= placeNameId != null ? _plugin.DataManager.GetExcelSheet<PlaceName>(ClientLanguage.English).GetRow(placeNameId).Name.ToString() : "";
             } else {
                 zone ??= "";
             }
@@ -538,20 +530,22 @@ namespace MapPartyAssist.Services {
 
         public void ArchiveMaps(IEnumerable<MPAMap> maps) {
             _plugin.Log.Information("正在归档所选地图...");
-            maps.ToList().ForEach(m => m.IsArchived = true);
-            _plugin.StorageManager.UpdateMaps(maps, false);
+            var mapList = maps.ToList(); // 只枚举一次
+            mapList.ForEach(m => m.IsArchived = true);
+            _plugin.StorageManager.UpdateMaps(mapList, false);
             _plugin.GameStateManager.BuildRecentPartyList();
             _plugin.Refresh();
         }
-
+        
         public void DeleteMaps(IEnumerable<MPAMap> maps) {
             _plugin.Log.Information("正在删除所选地图...");
-            maps.ToList().ForEach(m => m.IsDeleted = true);
-            _plugin.StorageManager.UpdateMaps(maps, false);
+            var mapList = maps.ToList(); // 只枚举一次
+            mapList.ForEach(m => m.IsDeleted = true);
+            _plugin.StorageManager.UpdateMaps(mapList, false);
             _plugin.GameStateManager.BuildRecentPartyList();
             _plugin.Refresh();
         }
-
+        
         public void ReassignMap(MPAMap map, MPAMember newOwner) {
             _plugin.Log.Information($"正在将地图持有人从 {map.Owner} 更改为 {newOwner.Key}");
             if(map.Owner != null && map.Owner.Equals(newOwner.Key)) {
@@ -609,7 +603,7 @@ namespace MapPartyAssist.Services {
         }
 
         //credit to Pohky on discord
-        internal static Vector2 WorldPosToMapCoords(Vector3 pos) {
+        private static Vector2 WorldPosToMapCoords(Vector3 pos) {
             var xInt = (int)(MathF.Round(pos.X, 3, MidpointRounding.AwayFromZero) * 1000);
             var yInt = (int)(MathF.Round(pos.Z, 3, MidpointRounding.AwayFromZero) * 1000);
             return new Vector2((int)(xInt * 0.001f * 1000f), (int)(yInt * 0.001f * 1000f));
@@ -626,7 +620,6 @@ namespace MapPartyAssist.Services {
                 if(closestLinkPlayer == null) {
                     closestLinkPlayer = player;
                     closestDistance = distance;
-                    continue;
                 } else if(distance < closestDistance) {
                     closestLinkPlayer = player;
                     closestDistance = distance;
@@ -639,27 +632,29 @@ namespace MapPartyAssist.Services {
             MPAMap? topCandidateMap = null;
             var maps = _plugin.StorageManager.GetMaps().Query().ToList();
             foreach(var map in maps) {
-                topCandidateMap ??= map;
                 TimeSpan currentMapSpan = results.Time - map.Time;
-                TimeSpan topCandidateMapSpan = results.Time - topCandidateMap.Time;
-                //same duty and must happen afterwards, but not more than 20 mins as a fallback
+                // 必须是之后发生且在20分钟以内
+                if (currentMapSpan.TotalMilliseconds <= 0 || currentMapSpan.TotalMinutes >= 20) {
+                    continue;
+                }
                 bool sameDuty = !map.DutyName.IsNullOrEmpty() && map.DutyName.Equals(results.DutyName, StringComparison.OrdinalIgnoreCase);
-                bool validTime = currentMapSpan.TotalMilliseconds > 0 && currentMapSpan.TotalMinutes < 20;
-                bool closerTime = currentMapSpan < topCandidateMapSpan;
-                if(sameDuty && validTime && closerTime) {
+                if (topCandidateMap == null) {
+                    if (sameDuty) {
+                        topCandidateMap = map;
+                    }
+                    continue;
+                }
+                TimeSpan topCandidateMapSpan = results.Time - topCandidateMap.Time;
+                // 如果当前地图更接近，并且满足同副本或更高优先级条件
+                if (sameDuty && currentMapSpan < topCandidateMapSpan) {
                     topCandidateMap = map;
-                    //clear top candidate if a closer time is found but with the wrong duty
-                } else if(!sameDuty && validTime && closerTime) {
-                    topCandidateMap = null;
-                    //clear invalid top candidates
-                } else if(map == topCandidateMap && (!sameDuty || !validTime)) {
-                    topCandidateMap = null;
                 }
             }
             return topCandidateMap;
         }
 
-        public DutyResults? FindDutyResultsForMap(MPAMap map) {
+
+        private DutyResults? FindDutyResultsForMap(MPAMap map) {
             return _plugin.StorageManager.GetDutyResults().Query().Include(dr => dr.Map).Where(dr => dr.Map != null && dr.Map.Id == map.Id).FirstOrDefault();
         }
 

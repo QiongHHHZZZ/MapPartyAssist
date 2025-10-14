@@ -15,7 +15,7 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using MapPartyAssist.Types;
 using MapPartyAssist.Localization;
-using MapPartyAssist.Types.REST.Universalis;
+using MapPartyAssist.Types.REST;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
