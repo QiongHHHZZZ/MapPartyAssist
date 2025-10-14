@@ -3,10 +3,10 @@
   "Name": "Map Party Assist",
   "Punchline": "藏宝图追踪与统计助手。",
   "Description": "用于记录队员开启的藏宝图，并统计地图与地宫相关数据的工具。",
-  "InternalName": "MapPartyAssist",
-  "RepoUrl": "https://github.com/wrath16/MapPartyAssist",
+  "InternalName": "MapPartyAssistCN",
+  "RepoUrl": "https://github.com/QiongHHHZZZ/MapPartyAssist",
   "ApplicableVersion": "any",
-  "Changelog": "-Bug fixes.",
+  "Changelog": "lacalization to Chinese by 穷孩子",
   "Tags": [
     "treasure maps",
     "maps",
