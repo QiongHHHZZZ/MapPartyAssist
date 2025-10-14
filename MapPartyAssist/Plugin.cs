@@ -16,7 +16,6 @@ using MapPartyAssist.Services;
 using MapPartyAssist.Settings;
 using MapPartyAssist.Windows;
 using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -44,7 +43,7 @@ namespace MapPartyAssist {
     public sealed class Plugin : IDalamudPlugin {
         public string Name => "挖宝统计助手";
         private const string DatabaseName = "data.db";
-        private static readonly ClientLanguage[] BaseSupportedLanguages = { ClientLanguage.English, ClientLanguage.French, ClientLanguage.German, ClientLanguage.Japanese };
+        private static readonly ClientLanguage[] BaseSupportedLanguages = [ClientLanguage.English, ClientLanguage.French, ClientLanguage.German, ClientLanguage.Japanese];
 
         private static readonly Dictionary<string, uint> BNpcNameFallbackRowIds = new(StringComparer.OrdinalIgnoreCase) {
             { "Altar Airavata", 7601u },
@@ -145,7 +144,7 @@ namespace MapPartyAssist {
         };
 
 
-        public IEnumerable<ClientLanguage> SupportedLanguages {
+        private IEnumerable<ClientLanguage> SupportedLanguages {
             get {
                 foreach(var language in BaseSupportedLanguages) {
                     yield return language;
@@ -160,7 +159,7 @@ namespace MapPartyAssist {
         private const string CommandName = "/mparty";
         private const string ConfigCommandName = "/mpartyconfig";
         private const string StatsCommandName = "/mpartystats";
-        private const string DutyResultsCommandName = "/mpartydutyresults";
+        // private const string DutyResultsCommandName = "/mpartydutyresults";
         private const string TestCommandName = "/mpartytest";
         private const string EditCommandName = "/mpartyedit";
 
@@ -173,7 +172,7 @@ namespace MapPartyAssist {
         internal IDutyState DutyState { get; init; }
         internal IPartyList PartyList { get; init; }
         internal IChatGui ChatGui { get; init; }
-        internal IGameGui GameGui { get; init; }
+        private IGameGui GameGui { get; init; }
         internal IFramework Framework { get; init; }
         internal IAddonLifecycle AddonLifecycle { get; init; }
         internal IGameInteropProvider InteropProvider { get; init; }
@@ -185,7 +184,7 @@ namespace MapPartyAssist {
         internal MapManager MapManager { get; init; }
         internal StorageManager StorageManager { get; init; }
         internal ImportManager ImportManager { get; init; }
-        internal MigrationManager MigrationManager { get; init; }
+        private MigrationManager MigrationManager { get; init; }
         internal DataQueueService DataQueue { get; init; }
         internal PriceHistoryService PriceHistory { get; init; }
 
@@ -193,17 +192,17 @@ namespace MapPartyAssist {
         internal GameFunctions Functions { get; init; }
 
         //UI
-        internal WindowSystem WindowSystem = new("Map Party Assist");
-        internal MainWindow MainWindow;
-        internal StatsWindow StatsWindow;
-        internal ConfigWindow ConfigWindow;
+        internal readonly WindowSystem WindowSystem = new("Map Party Assist");
+        internal readonly MainWindow MainWindow;
+        private readonly StatsWindow StatsWindow;
+        internal readonly ConfigWindow ConfigWindow;
 #if DEBUG
-        internal TestFunctionWindow TestFunctionWindow;
+        private readonly TestFunctionWindow TestFunctionWindow;
 #endif
         //non-persistent configuration options
-        internal bool PrintAllMessages { get; set; } = false;
-        internal bool PrintPayloads { get; set; } = false;
-        internal bool AllowEdit { get; set; } = false;
+        internal bool PrintAllMessages { get; set; }
+        internal bool PrintPayloads { get; set; }
+        internal bool AllowEdit { get; set; }
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -360,12 +359,12 @@ namespace MapPartyAssist {
             PluginInterface.UiBuilder.OpenMainUi -= DrawMainUI;
             PluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
 
-            MapManager?.Dispose();
-            DutyManager?.Dispose();
-            StorageManager?.Dispose();
-            GameStateManager?.Dispose();
-            DataQueue?.Dispose();
-            PriceHistory?.Dispose();
+            MapManager.Dispose();
+            DutyManager.Dispose();
+            StorageManager.Dispose();
+            GameStateManager.Dispose();
+            DataQueue.Dispose();
+            PriceHistory.Dispose();
         }
 
         private void OnCommand(string command, string args) {
@@ -423,7 +422,7 @@ namespace MapPartyAssist {
                 case (int)XivChatType.Party:
                 case (int)XivChatType.SystemMessage:
                     //Log.Verbose($"Message received: {type} {message} from {sender}");
-                    Log.Debug(String.Format("type: {0,-6} sender: {1,-20} message: {2}", type, sender, message));
+                    Log.Debug($"type: {0,-6} sender: {1,-20} message: {2}", type, sender, message);
                     if(PrintPayloads) {
                         foreach(Payload payload in message.Payloads) {
                             Log.Debug($"payload: {payload}");
@@ -444,8 +443,8 @@ namespace MapPartyAssist {
 
         public void Refresh() {
             Configuration.Save();
-            StatsWindow?.Refresh();
-            MainWindow?.Refresh();
+            StatsWindow.Refresh();
+            MainWindow.Refresh();
         }
 
         public bool IsLanguageSupported(ClientLanguage? language = null) {
@@ -481,21 +480,20 @@ namespace MapPartyAssist {
 
             try {
                 var sheet = DataManager.GetExcelSheet<Item>(languageToUse);
-                if(sheet != null) {
                     string normalizedTarget = NormalizeComparisonString(itemName);
                     foreach(var row in sheet) {
                         string normalizedSingular = NormalizeComparisonString(row.Singular.ToString());
-                        if(!string.IsNullOrEmpty(normalizedSingular) && string.Equals(normalizedTarget, normalizedSingular, StringComparison.OrdinalIgnoreCase)) {
+                        if(!string.IsNullOrEmpty(normalizedSingular) && string.Equals(normalizedTarget,
+                               normalizedSingular, StringComparison.OrdinalIgnoreCase)) {
                             return row.RowId;
                         }
-
                         if(usePluralForm) {
                             string normalizedPlural = NormalizeComparisonString(row.Plural.ToString());
                             if(!string.IsNullOrEmpty(normalizedPlural) && string.Equals(normalizedTarget, normalizedPlural, StringComparison.OrdinalIgnoreCase)) {
                                 return row.RowId;
                             }
                         }
-                    }
+                    
                 }
             } catch(Exception ex) {
                 Log.Warning(ex, $"Unable to resolve item row id for '{itemName}' in language {languageToUse}.");
@@ -529,8 +527,8 @@ namespace MapPartyAssist {
             }
 
             //iterate over table to find rowId
-            foreach(var row in DataManager.GetExcelSheet<T>((ClientLanguage)originLanguage)!) {
-                var rowData = columnProperty!.GetValue(row)?.ToString();
+            foreach(var row in DataManager.GetExcelSheet<T>((ClientLanguage)originLanguage)) {
+                var rowData = columnProperty.GetValue(row)?.ToString();
 
                 if(string.IsNullOrEmpty(rowData)) {
                     continue;
@@ -540,7 +538,7 @@ namespace MapPartyAssist {
                 if(originLanguage == ClientLanguage.German) {
                     var pronounProperty = type.GetProperty("Pronoun");
                     if(pronounProperty != null) {
-                        int pronoun = Convert.ToInt32(pronounProperty.GetValue(row))!;
+                        int pronoun = Convert.ToInt32(pronounProperty.GetValue(row));
                         rowData = ReplaceGermanDeclensionPlaceholders(rowData, pronoun, isPlural, gramCase);
                     }
                 }
@@ -570,7 +568,7 @@ namespace MapPartyAssist {
             //get data from destinationLanguage
             bool translatedRowFound = false;
             T translatedRow = default;
-            foreach(var row in DataManager.GetExcelSheet<T>(destinationLanguage)!) {
+            foreach(var row in DataManager.GetExcelSheet<T>(destinationLanguage)) {
                 if(row.RowId == rowId) {
                     translatedRow = row;
                     translatedRowFound = true;
@@ -587,7 +585,7 @@ namespace MapPartyAssist {
                 return data;
             }
 
-            string? translatedString = columnProperty!.GetValue(translatedRow)?.ToString();
+            string? translatedString = columnProperty.GetValue(translatedRow)?.ToString();
             if(string.IsNullOrEmpty(translatedString)) {
                 if(typeof(T) == typeof(BNpcName) && TryGetBNpcNameManualTranslation(data, destinationLanguage, out var manualTranslation)) {
                     return manualTranslation;
@@ -601,7 +599,7 @@ namespace MapPartyAssist {
             if(destinationLanguage == ClientLanguage.German) {
                 var pronounProperty = type.GetProperty("Pronoun");
                 if(pronounProperty != null) {
-                    int pronoun = Convert.ToInt32(pronounProperty.GetValue(translatedRow))!;
+                    int pronoun = Convert.ToInt32(pronounProperty.GetValue(translatedRow));
                     translatedString = ReplaceGermanDeclensionPlaceholders(translatedString, pronoun, isPlural, gramCase);
                 }
             }
@@ -654,7 +652,6 @@ namespace MapPartyAssist {
                 }
             }
             switch(gender) {
-                default:
                 case 0: //male
                     switch(gramCase) {
                         case GrammarCase.Nominative:
@@ -722,14 +719,14 @@ namespace MapPartyAssist {
             }
 
             //iterate over table to find rowId
-            foreach(var row in DataManager.GetExcelSheet<T>((ClientLanguage)language)!) {
-                var rowData = columnProperty!.GetValue(row)?.ToString();
+            foreach(var row in DataManager.GetExcelSheet<T>((ClientLanguage)language)) {
+                var rowData = columnProperty.GetValue(row)?.ToString();
 
                 //German declension placeholder replacement
                 if(language == ClientLanguage.German && rowData != null) {
                     var pronounProperty = type.GetProperty("Pronoun");
                     if(pronounProperty != null) {
-                        int pronoun = Convert.ToInt32(pronounProperty.GetValue(row))!;
+                        int pronoun = Convert.ToInt32(pronounProperty.GetValue(row));
                         rowData = ReplaceGermanDeclensionPlaceholders(rowData, pronoun, isPlural, gramCase);
                     }
                 }

@@ -12,15 +12,15 @@ namespace MapPartyAssist.Services {
     //internal service for managing connections to LiteDB database
     internal class StorageManager : IDisposable {
 
-        internal const string MapTable = "map";
-        internal const string DutyResultsTable = "dutyresults";
-        internal const string DutyResultsRawTable = "dutyresults_raw";
-        internal const string StatsImportTable = "dutyresultsimport";
-        internal const string PlayerTable = "player";
-        internal const string PriceTable = "price";
+        private const string MapTable = "map";
+        private const string DutyResultsTable = "dutyresults";
+        private const string DutyResultsRawTable = "dutyresults_raw";
+        private const string StatsImportTable = "dutyresultsimport";
+        private const string PlayerTable = "player";
+        private const string PriceTable = "price";
 
-        private Plugin _plugin;
-        private SemaphoreSlim _dbLock = new SemaphoreSlim(1, 1);
+        private readonly Plugin _plugin;
+        private readonly SemaphoreSlim _dbLock = new SemaphoreSlim(1, 1);
         private LiteDatabase Database { get; init; }
 
         internal ILiteCollection<MPAMap> Maps {
@@ -72,20 +72,22 @@ namespace MapPartyAssist.Services {
         }
 
         internal void AddMaps(IEnumerable<MPAMap> maps, bool toSave = true) {
-            LogUpdate(null, maps.Count());
-            WriteToDatabase(() => GetMaps().Insert(maps), toSave);
+            var mapList = maps.ToList(); // 避免多次枚举
+            LogUpdate(null, mapList.Count);
+            WriteToDatabase(() => GetMaps().Insert(mapList), toSave);
         }
-
+        
         internal void UpdateMap(MPAMap map, bool toSave = true) {
             LogUpdate(map.Id.ToString());
             WriteToDatabase(() => GetMaps().Update(map), toSave);
         }
 
         internal void UpdateMaps(IEnumerable<MPAMap> maps, bool toSave = true) {
-            LogUpdate(null, maps.Count());
-            WriteToDatabase(() => GetMaps().Update(maps.Where(m => m.Id != null)), toSave);
+            var mapList = maps.ToList(); // 避免多次枚举
+            LogUpdate(null, mapList.Count);
+            WriteToDatabase(() => GetMaps().Update(mapList), toSave);
         }
-
+        
         internal ILiteCollection<MPAMap> GetMaps() {
             return Database.GetCollection<MPAMap>(MapTable);
         }
@@ -110,20 +112,22 @@ namespace MapPartyAssist.Services {
         }
 
         internal void AddDutyResults(IEnumerable<DutyResults> results, bool toSave = true) {
-            LogUpdate(null, results.Count());
-            WriteToDatabase(() => GetDutyResults().Insert(results), toSave);
+            var resultList = results.ToList(); // 避免多次枚举
+            LogUpdate(null, resultList.Count);
+            WriteToDatabase(() => GetDutyResults().Insert(resultList), toSave);
         }
-
+        
         internal void UpdateDutyResults(DutyResults results, bool toSave = true) {
             LogUpdate(results.Id.ToString());
             WriteToDatabase(() => GetDutyResults().Update(results), toSave);
         }
 
         internal void UpdateDutyResults(IEnumerable<DutyResults> results, bool toSave = true) {
-            LogUpdate(null, results.Count());
-            WriteToDatabase(() => GetDutyResults().Update(results), toSave);
+            var resultList = results.ToList(); // 避免多次枚举
+            LogUpdate(null, resultList.Count);
+            WriteToDatabase(() => GetDutyResults().Update(resultList), toSave);
         }
-
+        
         internal ILiteCollection<DutyResults> GetDutyResults() {
             return Database.GetCollection<DutyResults>(DutyResultsTable);
         }
@@ -138,7 +142,7 @@ namespace MapPartyAssist.Services {
             WriteToDatabase(() => GetDutyResultsRaw().Update(results), toSave);
         }
 
-        internal ILiteCollection<DutyResultsRaw> GetDutyResultsRaw() {
+        private ILiteCollection<DutyResultsRaw> GetDutyResultsRaw() {
             return Database.GetCollection<DutyResultsRaw>(DutyResultsRawTable);
         }
 
@@ -157,15 +161,17 @@ namespace MapPartyAssist.Services {
         }
 
         internal void AddPrices(IEnumerable<PriceCheck> prices, bool toSave = true) {
-            LogUpdate(null, prices.Count());
-            WriteToDatabase(() => GetPrices().Insert(prices), toSave);
+            var priceList = prices.ToList(); // 避免多次枚举
+            LogUpdate(null, priceList.Count);
+            WriteToDatabase(() => GetPrices().Insert(priceList), toSave);
         }
 
         internal void UpdatePrices(IEnumerable<PriceCheck> prices, bool toSave = true) {
-            LogUpdate(null, prices.Count());
-            WriteToDatabase(() => GetPrices().Update(prices), toSave);
+            var priceList = prices.ToList(); // 避免多次枚举
+            LogUpdate(null, priceList.Count);
+            WriteToDatabase(() => GetPrices().Update(priceList), toSave);
         }
-
+        
         internal ILiteCollection<PriceCheck> GetPrices() {
             return Database.GetCollection<PriceCheck>(PriceTable);
         }
@@ -245,8 +251,6 @@ namespace MapPartyAssist.Services {
 
                 //check enumerable
                 if(hasEnumerableData && !isNull && prop.PropertyType != typeof(string)) {
-                    var enumerable = (System.Collections.IEnumerable)curValue!;
-
                     foreach(var element in (System.Collections.IEnumerable)curValue!) {
                         isValid = ValidateDataType(element, correctErrors) && isValid;
                     }

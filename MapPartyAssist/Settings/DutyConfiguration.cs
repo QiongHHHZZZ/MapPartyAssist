@@ -1,10 +1,10 @@
 ﻿namespace MapPartyAssist.Settings {
     public class DutyConfiguration {
         public int DutyId { get; set; }
-        public bool DisplayClearSequence { get; set; } = false;
+        public bool DisplayClearSequence { get; set; }
         public bool DisplayRunsSinceLastClear { get; set; } = true;
-        public bool DisplayDeaths { get; set; } = false;
-        public bool OmitZeroCheckpoints { get; set; } = false;
+        public bool DisplayDeaths { get; set; }
+        public bool OmitZeroCheckpoints { get; set; }
 
         public DutyConfiguration() {
         }

@@ -1,17 +1,14 @@
 ﻿using MapPartyAssist.Types;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MapPartyAssist.Services {
     //internal class for handling duty results imports
-    internal class ImportManager {
-        private Plugin _plugin;
-
-        public ImportManager(Plugin plugin) {
-            _plugin = plugin;
-        }
+    internal class ImportManager(Plugin plugin) {
+        private readonly Plugin _plugin = plugin;
 
         internal void SetupCheckpointTotals(DutyResultsImport import) {
-            var duty = _plugin.DutyManager.Duties[import.DutyId];
+            var duty = _plugin.DutyManager.Duties.GetValueOrDefault(import.DutyId);
 
             //check for valid duty
             if(duty == null || duty.Checkpoints == null) {
@@ -20,7 +17,7 @@ namespace MapPartyAssist.Services {
             }
 
             import.CheckpointTotals = new();
-            foreach(var checkpoint in duty.Checkpoints!) {
+            for(int i = 0; i < duty.Checkpoints!.Count; i++) {
                 import.CheckpointTotals.Add(0);
             }
         }
@@ -55,12 +52,13 @@ namespace MapPartyAssist.Services {
             }
 
             //check total clears
-            if(import.TotalClears < 0 || import.TotalClears >= import.TotalRuns) {
+            if(import.TotalClears == 0) {
                 return false;
             }
 
             //check gil
-            if(import.TotalGil != null && import.TotalGil < 0) {
+            if(import.TotalGil is null || import.TotalGil < 0)
+            {
                 return false;
             }
 
@@ -68,10 +66,6 @@ namespace MapPartyAssist.Services {
             if(import.CheckpointTotals != null) {
                 for(int i = 0; i < import.CheckpointTotals.Count; i++) {
                     var checkpointCount = import.CheckpointTotals.ElementAt(i);
-                    //check for negative number
-                    if(checkpointCount < 0) {
-                        return false;
-                    }
                     //check against previous checkpoint
                     if(i == 0 && checkpointCount > import.TotalRuns) {
                         return false;
@@ -114,14 +108,12 @@ namespace MapPartyAssist.Services {
 
             //check summon count against checkpoint count
             if(import.SummonTotals != null) {
-                uint summonSum = 0;
-                foreach(var summon in import.SummonTotals) {
-                    //check for non-negative number
-                    if(summon.Value < 0) {
-                        return false;
-                    }
-                    summonSum += summon.Value;
-                }
+                // foreach(var summon in import.SummonTotals) {
+                //     //check for non-negative number
+                //     if(summon.Value < 0) {
+                //         return false;
+                //     }
+                // }
                 //check against checkpoint totals
                 //if(import.CheckpointTotals != null) {
 

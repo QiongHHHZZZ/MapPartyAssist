@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MapPartyAssist.Types.REST.Universalis {
+namespace MapPartyAssist.Types.REST {
     public struct HistoryResponse {
         public Dictionary<uint, ItemHistory> Items;
         public List<uint> ItemIDs, UnresolvedItems;

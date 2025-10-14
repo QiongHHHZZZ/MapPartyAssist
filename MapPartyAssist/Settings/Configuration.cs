@@ -28,11 +28,11 @@ namespace MapPartyAssist.Settings {
         public string LastPluginVersion { get; set; } = "0.0.0.0";
         public bool MasterSwitch { get; set; } = true;
         public uint ArchiveThresholdHours { get; set; } = 24;
-        public bool UndockZoneWindow { get; set; } = false;
-        public bool HideZoneTable { get; set; } = false;
-        public bool HideZoneTableWhenEmpty { get; set; } = false;
-        public bool RequireDoubleClickOnClearAll { get; set; } = false;
-        public bool NoOverwriteMapLink { get; set; } = false;
+        public bool UndockZoneWindow { get; set; }
+        public bool HideZoneTable { get; set; }
+        public bool HideZoneTableWhenEmpty { get; set; }
+        public bool RequireDoubleClickOnClearAll { get; set; }
+        public bool NoOverwriteMapLink { get; set; }
         public bool HighlightLinksInCurrentZone { get; set; } = true;
         public bool HighlightClosestLink { get; set; } = true;
         public bool ShowStatsWindowTooltips { get; set; } = true;
@@ -42,11 +42,11 @@ namespace MapPartyAssist.Settings {
         public ClearSequenceCount ClearSequenceCount { get; set; } = ClearSequenceCount.Last;
         public bool TotalMapsClearSequence { get; set; } = false;
         public bool EnableWhileSolo { get; set; } = true;
-        public bool CurrentCharacterStatsOnly { get; set; } = false;
+        public bool CurrentCharacterStatsOnly { get; set; }
         public Dictionary<int, DutyConfiguration> DutyConfigurations { get; set; } = new();
         public FilterConfiguration StatsWindowFilters { get; set; } = new();
         public List<LootResultKey> LootPins { get; set; } = new();
-        public bool EnablePriceCheck { get; set; } = false;
+        public bool EnablePriceCheck { get; set; }
         public string? MapLinkChat { get; set; }
         [Obsolete]
         public Dictionary<string, MPAMember> RecentPartyList { get; set; } = new();
@@ -57,10 +57,7 @@ namespace MapPartyAssist.Settings {
         private Plugin? _plugin;
         [NonSerialized]
         private SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
-
-        public Configuration() {
-        }
-
+        
         public void Initialize(Plugin plugin) {
             _plugin = plugin;
 

@@ -33,12 +33,15 @@ namespace MapPartyAssist.Helper {
                 price = loot.Quantity;
             }
 
-            int? droppedValueContribution = price.HasValue
-                ? (isGil ? price.Value * participantCount : price.Value * loot.Quantity)
-                : null;
-            int? obtainedValueContribution = price.HasValue
-                ? price.Value * obtainedQuantity
-                : null;
+            int? droppedValueContribution = null;
+            int? obtainedValueContribution = null;
+
+            if (price.HasValue)
+            {
+                droppedValueContribution = isGil ? price.Value * participantCount : price.Value * loot.Quantity;
+                obtainedValueContribution = price.Value * obtainedQuantity;
+            }
+
 
             if(!summary.TryGetValue(key, out var aggregate)) {
                 var itemRow = itemResolver(loot.ItemId);

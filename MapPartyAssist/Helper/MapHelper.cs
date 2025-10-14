@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace MapPartyAssist.Helper {
     internal static class MapHelper {
 
-        public static Dictionary<uint, TreasureMap> IdToMapTypeMap = new() {
+        public static readonly Dictionary<uint, TreasureMap> IdToMapTypeMap = new() {
             {2000297,  TreasureMap.Leather},
             {2001088,  TreasureMap.Goatskin},
             {2001089,  TreasureMap.Toadskin},
@@ -74,7 +74,6 @@ namespace MapPartyAssist.Helper {
                 TreasureMapCategory.Elpis => Loc.Tr("Elpis"),
                 TreasureMapCategory.Dawntrail => Loc.Tr("Dawntrail"),
                 TreasureMapCategory.LivingMemory => Loc.Tr("Living Memory"),
-                TreasureMapCategory.Unknown => Loc.Tr("Unknown/Unrecorded"),
                 _ => Loc.Tr("Unknown/Unrecorded"),
             };
         }
